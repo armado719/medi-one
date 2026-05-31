@@ -218,22 +218,43 @@ enum MovementType     { ENTRADA SALIDA AJUSTE }
 
 ### 1. PACIENTES
 
-**Campos del formulario:**
+**Campos del formulario** *(actualizado v2 — basado en referencias visuales de software médico colombiano)*:
+
 | Campo | Tipo | Validación |
 |-------|------|-----------|
-| Nombres | text | requerido, mín 2 caracteres |
-| Apellidos | text | requerido, mín 2 caracteres |
-| Tipo documento | select (CC, CE, PA, TI) | requerido |
+| Primer nombre | text | requerido, mín 2 caracteres |
+| Segundo nombre | text | opcional |
+| Primer apellido | text | requerido, mín 2 caracteres |
+| Segundo apellido | text | opcional |
+| Tipo documento | select (CC, CE, PA, TI, RC) | requerido |
 | Número documento | text | requerido, único, solo números, 6-12 dígitos |
 | Fecha de nacimiento | date | requerido, no puede ser futura |
+| Edad | calculada automáticamente | solo lectura |
 | Sexo | select (Masculino, Femenino, Otro) | requerido |
+| Estado civil | select (Soltero/a, Casado/a, Unión libre, Divorciado/a, Viudo/a) | opcional |
 | Teléfono | text | requerido, formato colombiano: 10 dígitos, empieza en 3 |
+| Teléfono alternativo | text | opcional |
 | Email | email | opcional, formato válido |
+| Zona | select (Urbana, Rural) | opcional |
+| Departamento | select (listado departamentos Colombia) | opcional |
+| Municipio | text (dependiente del departamento) | opcional |
 | Dirección | text | opcional |
-| Ciudad | text | opcional |
 | EPS | text | opcional |
 | Ocupación | text | opcional |
+| Religión | text | opcional |
+| Responsable / Contacto de emergencia | text | opcional |
+| Parentesco del responsable | select | opcional |
+| Teléfono del responsable | text | opcional |
+| Observaciones generales | textarea | opcional |
 | Estado | toggle (Activo/Inactivo) | default: Activo |
+
+**Vista de detalle del paciente** *(mejorada v2)*:
+- Tarjetas de alerta destacadas al tope del perfil:
+  - 🟡 **Observaciones importantes** — resaltadas en amarillo
+  - 🔴 **Alergias** — resaltadas en rosa/rojo
+  - 🔵 **Medicamentos actuales** — resaltadas en azul claro
+- Timeline visual de consultas: íconos por tipo (L=Laboral, E=Estética, C=Cardiovascular) en línea horizontal con fecha y médico — al hacer clic se despliega el resumen
+- Sidebar derecho en el detalle: listado de citas con fecha, código y valor (como referencia visual)
 
 **Comportamiento:**
 - Búsqueda en tiempo real por nombre o documento (debounce 300ms)
@@ -251,7 +272,7 @@ enum MovementType     { ENTRADA SALIDA AJUSTE }
 
 **Vistas:** Mes / Semana / Día (usando react-big-calendar o similar compatible con shadcn)
 
-**Campos de cita:**
+**Campos de cita** *(actualizado v2)*:
 | Campo | Validación |
 |-------|-----------|
 | Paciente | requerido, buscar por nombre/documento |
@@ -259,12 +280,19 @@ enum MovementType     { ENTRADA SALIDA AJUSTE }
 | Duración | select: 15, 30, 45, 60, 90 min |
 | Tipo de consulta | select: Laboral, Estética, Cardiovascular, Control |
 | Médico asignado | requerido |
+| Primera vez | checkbox (paciente nuevo vs recurrente) |
+| Valor de la consulta | número, opcional (pre-llena factura) |
+| Descuento | número, opcional |
+| Consulta prioritaria | checkbox (para triaje) |
 | Notas | opcional, máx 500 caracteres |
 
 **Comportamiento:**
 - Validar que no haya citas solapadas para el mismo médico
 - Si hay solapamiento → `"El médico ya tiene una cita en ese horario"`
-- Cambio de estado con un clic desde la vista de calendario
+- **Panel lateral derecho** al seleccionar cita: muestra detalle sin cerrar el calendario (Paciente, Médico, Fecha, Hora, Estado, Valor) con botones de acción
+- Filtros encima del calendario: por médico, por tipo de consulta
+- Botones de vista: Mes / Semana / Día / Lista
+- Cambio de estado con un clic desde el panel lateral
 - Campo "recordatorio WhatsApp" guardado pero sin lógica de envío (placeholder para integración futura)
 
 ---
@@ -506,18 +534,19 @@ Registrar automáticamente: toda creación/edición de historia clínica, toda f
 
 ## FASE DE DESARROLLO
 
-### Fase 1 — MVP (criterios de aceptación)
-- [ ] Setup completo: Next.js + Prisma + MySQL + NextAuth funcionando
-- [ ] Login con 3 roles, redirección según rol
-- [ ] CRUD completo de Pacientes con búsqueda y paginación
-- [ ] Los 3 formularios de Historia Clínica guardando en BD
-- [ ] Agenda con calendario visual, crear y editar citas
-- [ ] Layout con sidebar, colores y tipografía del sistema de diseño
+### Fase 1 — MVP ✅ COMPLETADA
+- [x] Setup completo: Next.js + Prisma + MySQL + NextAuth funcionando
+- [x] Login con 3 roles, redirección según rol
+- [x] CRUD completo de Pacientes con búsqueda y paginación
+- [x] Los 3 formularios de Historia Clínica guardando en BD
+- [x] Agenda con calendario visual, crear y editar citas
+- [x] Layout con sidebar, colores y tipografía del sistema de diseño
+- [x] Sistema de PDF e impresión con membrete en historias clínicas
 
-### Fase 2
-- [ ] Facturación con PDF y numeración consecutiva
-- [ ] Consentimientos informados con PDF
-- [ ] Fórmulas médicas con PDF
+### Fase 2 — EN PROGRESO
+- [ ] Facturación con PDF y numeración consecutiva (FAC-YYYY-NNNN)
+- [ ] Consentimientos informados con PDF y variables dinámicas
+- [ ] Fórmulas médicas con PDF membretado
 - [ ] Módulo de Inventario con alertas y descuento automático
 
 ### Fase 3
@@ -525,7 +554,46 @@ Registrar automáticamente: toda creación/edición de historia clínica, toda f
 - [ ] Dashboard con todos los widgets y gráficas
 - [ ] Módulo de Configuración completo
 - [ ] AuditLog implementado
-- [ ] Script de backup automático
+- [ ] Script de backup automático nocturno
+
+---
+
+## MEJORAS UX/UI — REFERENCIAS VISUALES (v2)
+
+Identificadas analizando software médico colombiano de referencia:
+
+### Formulario de Paciente
+- Dividir nombres/apellidos en 4 campos separados: Primer nombre, Segundo nombre, Primer apellido, Segundo apellido (estándar Colombia)
+- Agregar campo **Zona** (Urbana / Rural)
+- Agregar selector **Departamento → Municipio** en cascada
+- Agregar **Responsable / Contacto de emergencia** con parentesco y teléfono
+- Agregar campo **Estado civil**
+- Agregar campo **Religión** (opcional)
+
+### Perfil del Paciente (vista detalle)
+- **3 tarjetas de alerta** siempre visibles al tope: Observaciones (amarillo), Alergias (rosa), Medicamentos actuales (azul)
+- **Timeline horizontal** de consultas con íconos por tipo y fechas — al hacer clic se expande el resumen de esa consulta
+- **Panel lateral** de citas con historial de fechas y valores
+
+### Agenda
+- **Panel lateral derecho** al seleccionar cita (sin modal) — muestra detalle completo con botones de acción
+- **Filtros encima del calendario**: por médico, por tipo de consulta
+- **Vista Lista** además de Mes/Semana/Día
+- En el formulario de cita: agregar **Primera vez** (checkbox), **Valor de consulta**, **Prioridad**
+
+### Historias Clínicas
+- Tabs numerados tipo "1 de 9", "2 de 9" — el usuario sabe cuántas secciones quedan
+- Sección de **hábitos** (tabaco, alcohol, actividad física) con botones visuales tipo toggle, no solo checkbox
+- Botones **Imprimir** y **Descargar PDF** siempre visibles en la barra superior de cada historia ✅ (ya implementado)
+
+### Dashboard
+- 4 tarjetas de color grande con número + ícono + título (estilo SuitePsy)
+- Accesos directos rápidos a módulos principales desde la pantalla de inicio
+
+### PDFs
+- Todos los PDFs llevan membrete MEDI ONE con colores rose gold ✅ (ya implementado)
+- Fórmula médica: pie de página "Válida por 30 días desde la fecha de emisión"
+- Factura: sello "PAGADO" en verde cuando el estado es pagado
 
 ---
 
