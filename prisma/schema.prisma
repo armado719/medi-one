@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MEDICO
+  RECEPCIONISTA
+  ADMINISTRADOR
+}
+
+enum DocumentType {
+  CC
+  CE
+  PA
+  TI
+}
+
+enum Sex {
+  MASCULINO
+  FEMENINO
+  OTRO
+}
+
+enum PatientStatus {
+  ACTIVO
+  INACTIVO
+}
+
+enum AppointmentType {
+  LABORAL
+  ESTETICA
+  CARDIOVASCULAR
+  CONTROL
+}
+
+enum AppointmentStatus {
+  CONFIRMADA
+  PENDIENTE
+  CANCELADA
+  NO_ASISTIO
+}
+
+enum ClinicalRecordType {
+  LABORAL
+  ESTETICA
+  CARDIOVASCULAR
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String    @db.VarChar(255)
+  email     String    @unique @db.VarChar(255)
+  password  String    @db.VarChar(255)
+  role      Role      @default(RECEPCIONISTA)
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  appointments    Appointment[]
+  clinicalRecords ClinicalRecord[]
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+model Patient {
+  id             String        @id @default(cuid())
+  firstName      String        @db.VarChar(100)
+  lastName       String        @db.VarChar(100)
+  documentType   DocumentType
+  documentNumber String        @db.VarChar(20)
+  birthDate      DateTime      @db.Date
+  sex            Sex
+  phone          String        @db.VarChar(20)
+  email          String?       @db.VarChar(255)
+  address        String?       @db.VarChar(500)
+  city           String?       @db.VarChar(100)
+  eps            String?       @db.VarChar(255)
+  occupation     String?       @db.VarChar(255)
+  status         PatientStatus @default(ACTIVO)
+  photoUrl       String?       @db.VarChar(500)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  appointments    Appointment[]
+  clinicalRecords ClinicalRecord[]
+
+  @@unique([documentType, documentNumber])
+  @@map("patients")
+}
+
+model Appointment {
+  id               String            @id @default(cuid())
+  patientId        String
+  userId           String
+  date             DateTime
+  duration         Int               @default(30)
+  type             AppointmentType
+  status           AppointmentStatus @default(PENDIENTE)
+  notes            String?           @db.Text
+  whatsappReminder Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("appointments")
+}
+
+model ClinicalRecord {
+  id        String             @id @default(cuid())
+  patientId String
+  userId    String
+  type      ClinicalRecordType
+  data      Json               @db.Json
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  deletedAt DateTime?
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("clinical_records")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   @db.VarChar(100)
+  entity    String   @db.VarChar(100)
+  entityId  String   @db.VarChar(100)
+  changes   Json?    @db.Json
+  ip        String?  @db.VarChar(45)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
