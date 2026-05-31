@@ -24,7 +24,25 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
 import type { Invoice, InvoiceStatus, PaymentMethod } from '@/types'
 
-interface InvoiceDetail extends Invoice {
+interface InvoiceDetail {
+  id: string
+  number: string
+  patientId: string
+  userId: string
+  appointmentId?: string | null
+  status: InvoiceStatus
+  paymentMethod?: PaymentMethod | null
+  subtotal: number
+  discount: number
+  discountType: string
+  taxAmount: number
+  total: number
+  notes?: string | null
+  cancelReason?: string | null
+  paidAt?: string | null
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
   patient: {
     firstName: string
     lastName: string
@@ -34,7 +52,14 @@ interface InvoiceDetail extends Invoice {
     email?: string | null
   }
   user: { name: string }
-  items: Invoice['items']
+  items: Array<{
+    id: string
+    description: string
+    quantity: number
+    unitPrice: number
+    taxRate: number
+    subtotal: number
+  }>
 }
 
 function StatusBadge({ status }: { status: InvoiceStatus }) {

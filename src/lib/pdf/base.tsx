@@ -276,7 +276,7 @@ export function PDFFooter({ text }: { text?: string }) {
 interface FieldProps {
   label: string
   value?: string | number | null
-  style?: object
+  style?: import('@react-pdf/types').Style
 }
 
 export function PDFField({ label, value, style }: FieldProps) {

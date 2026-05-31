@@ -29,8 +29,9 @@ export function HistoriaEsteticaPDF({ record }: Props) {
   const fecha = formatDate(new Date(record.createdAt))
   const paciente = `${record.patient.firstName} ${record.patient.lastName}`
 
-  const zonasActivas = Object.entries(d.zonas ?? {})
-    .filter(([, v]) => v)
+  const zt = d.zonasTratar ?? {}
+  const zonasActivas = Object.entries(zt)
+    .filter(([k, v]) => k !== 'descripcion' && v === true)
     .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
 
   return (
@@ -73,21 +74,21 @@ export function HistoriaEsteticaPDF({ record }: Props) {
             <View style={s.row}>
               <View style={s.col2}>
                 <Text style={s.fieldLabel}>Alergias</Text>
-                <Text style={s.textBlock}>{d.alergias || '—'}</Text>
+                <Text style={s.textBlock}>{d.antecedentes?.alergias || '—'}</Text>
               </View>
               <View style={[s.col2, { paddingLeft: 8 }]}>
                 <Text style={s.fieldLabel}>Medicamentos actuales</Text>
-                <Text style={s.textBlock}>{d.medicamentos || '—'}</Text>
+                <Text style={s.textBlock}>{d.antecedentes?.medicamentosActuales || '—'}</Text>
               </View>
             </View>
             <View style={[s.row, { marginTop: 6 }]}>
               <View style={s.col2}>
                 <Text style={s.fieldLabel}>Cirugías previas</Text>
-                <Text style={s.textBlock}>{d.cirugias || '—'}</Text>
+                <Text style={s.textBlock}>{d.antecedentes?.cirugiasPrevias || '—'}</Text>
               </View>
               <View style={[s.col2, { paddingLeft: 8 }]}>
                 <Text style={s.fieldLabel}>Enfermedades crónicas</Text>
-                <Text style={s.textBlock}>{d.enfermedadesCronicas || '—'}</Text>
+                <Text style={s.textBlock}>{d.antecedentes?.enfermedadesCronicas || '—'}</Text>
               </View>
             </View>
           </View>
@@ -96,28 +97,28 @@ export function HistoriaEsteticaPDF({ record }: Props) {
           <View style={s.section}>
             <Text style={s.sectionTitle}>Procedimiento</Text>
             <View style={s.row}>
-              <PDFField label="Procedimiento" value={d.procedimiento} style={s.col2} />
-              <PDFField label="Técnica" value={d.tecnica} style={s.col2} />
+              <PDFField label="Procedimiento" value={d.procedimiento?.nombre} style={s.col2} />
+              <PDFField label="Técnica" value={d.procedimiento?.tecnica} style={s.col2} />
             </View>
             <View style={s.row}>
-              <PDFField label="Duración" value={d.duracion ? `${d.duracion} min` : undefined} style={s.col3} />
+              <PDFField label="Duración" value={d.procedimiento?.duracion ? `${d.procedimiento.duracion} min` : undefined} style={s.col3} />
               <View style={[s.col2, { paddingLeft: 8 }]}>
                 <Text style={s.fieldLabel}>Zonas tratadas</Text>
                 <Text style={s.fieldValue}>{zonasActivas.join(' · ') || '—'}</Text>
               </View>
             </View>
-            {d.descripcionZonas && (
+            {d.zonasTratar?.descripcion && (
               <>
                 <Text style={[s.fieldLabel, { marginTop: 6, marginBottom: 3 }]}>
                   Descripción de zonas
                 </Text>
-                <Text style={s.textBlock}>{d.descripcionZonas}</Text>
+                <Text style={s.textBlock}>{d.zonasTratar.descripcion}</Text>
               </>
             )}
           </View>
 
           {/* Materiales */}
-          {Array.isArray(d.materiales) && d.materiales.length > 0 && (
+          {Array.isArray(d.materialesUsados) && d.materialesUsados.length > 0 && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>Materiales e Insumos Utilizados</Text>
               <View style={s.table}>
@@ -127,33 +128,28 @@ export function HistoriaEsteticaPDF({ record }: Props) {
                   <Text style={s.tableHeaderCell}>Lote</Text>
                   <Text style={s.tableHeaderCell}>Cantidad</Text>
                 </View>
-                {(d.materiales as Array<{ producto: string; marca: string; lote: string; cantidad: string }>).map(
-                  (m, i) => (
-                    <View
-                      key={i}
-                      style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}
-                    >
-                      <Text style={[s.tableCell, { flex: 2 }]}>{m.producto}</Text>
-                      <Text style={s.tableCell}>{m.marca}</Text>
-                      <Text style={s.tableCell}>{m.lote}</Text>
-                      <Text style={s.tableCell}>{m.cantidad}</Text>
-                    </View>
-                  )
-                )}
+                {d.materialesUsados.map((m, i) => (
+                  <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
+                    <Text style={[s.tableCell, { flex: 2 }]}>{m.producto}</Text>
+                    <Text style={s.tableCell}>{m.marca}</Text>
+                    <Text style={s.tableCell}>{m.lote}</Text>
+                    <Text style={s.tableCell}>{m.cantidad}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           )}
 
           {/* Evolución */}
-          {d.evolucion && (
+          {d.evolucion?.descripcion && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>Evolución y Seguimiento</Text>
-              <Text style={s.textBlock}>{d.evolucion}</Text>
-              {d.proximaCita && (
+              <Text style={s.textBlock}>{d.evolucion.descripcion}</Text>
+              {d.evolucion?.proximaCita && (
                 <View style={[s.row, { marginTop: 6 }]}>
                   <PDFField
                     label="Próxima cita recomendada"
-                    value={formatDate(new Date(d.proximaCita))}
+                    value={d.evolucion.proximaCita}
                     style={{ width: 200 }}
                   />
                 </View>
@@ -165,7 +161,11 @@ export function HistoriaEsteticaPDF({ record }: Props) {
           <View style={s.section}>
             <Text style={s.sectionTitle}>Consentimiento Informado</Text>
             <View style={s.row}>
-              <PDFField label="Estado" value={d.consentimientoEstado === 'FIRMADO' ? 'Firmado ✓' : 'Pendiente'} style={s.col2} />
+              <PDFField
+                label="Estado"
+                value={d.consentimiento?.estado === 'Firmado' ? 'Firmado ✓' : 'Pendiente'}
+                style={s.col2}
+              />
             </View>
           </View>
 

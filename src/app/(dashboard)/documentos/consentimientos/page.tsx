@@ -18,7 +18,17 @@ import { GenerarConsentimientoModal } from '@/components/modules/documentos/Gene
 import { ConsentimientoTemplateForm } from '@/components/modules/documentos/ConsentimientoTemplateForm'
 import type { ConsentTemplate, ConsentForm, ConsentStatus } from '@/types'
 
-interface ConsentFormRow extends ConsentForm {
+interface ConsentFormRow {
+  id: string
+  templateId: string
+  patientId: string
+  recordId?: string | null
+  status: ConsentStatus
+  signedAt?: string | null
+  notes?: string | null
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
   patient: { firstName: string; lastName: string; documentType: string; documentNumber: string }
   template: { name: string; procedure: string }
 }

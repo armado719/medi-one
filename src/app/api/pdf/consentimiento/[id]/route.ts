@@ -46,8 +46,9 @@ export async function GET(
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const buffer = await renderToBuffer(createElement(ConsentimientoPDF, { consentForm: typedForm as any }))
-    return new NextResponse(buffer, {
+    const element = createElement(ConsentimientoPDF, { consentForm: typedForm as any }) as any
+    const buffer = await renderToBuffer(element)
+    return new NextResponse(buffer as unknown as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

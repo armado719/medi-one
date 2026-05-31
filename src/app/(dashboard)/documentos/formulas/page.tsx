@@ -13,7 +13,17 @@ import { formatDate } from '@/lib/utils'
 import { useDebounce } from '@/hooks/useDebounce'
 import type { Prescription } from '@/types'
 
-interface PrescriptionRow extends Prescription {
+interface PrescriptionRow {
+  id: string
+  patientId: string
+  userId: string
+  recordId?: string | null
+  diagnosis?: string | null
+  instructions?: string | null
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
+  items?: Array<unknown>
   patient: { firstName: string; lastName: string; documentNumber: string }
   user: { name: string }
 }

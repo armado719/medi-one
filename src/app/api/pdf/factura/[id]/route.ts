@@ -52,8 +52,8 @@ export async function GET(
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const buffer = await renderToBuffer(createElement(FacturaPDF, { invoice: typedInvoice as any }))
-    return new NextResponse(buffer, {
+    const buffer = await renderToBuffer(createElement(FacturaPDF, { invoice: typedInvoice as any }) as any)
+    return new NextResponse(buffer as unknown as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

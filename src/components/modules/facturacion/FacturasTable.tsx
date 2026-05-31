@@ -12,7 +12,17 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Invoice, InvoiceStatus } from '@/types'
 
-interface InvoiceRow extends Invoice {
+interface InvoiceRow {
+  id: string
+  number: string
+  patientId: string
+  status: InvoiceStatus
+  paymentMethod?: string | null
+  total: number
+  discount: number
+  taxAmount: number
+  createdAt: string
+  paidAt?: string | null
   patient: { firstName: string; lastName: string; documentNumber: string }
   _count: { items: number }
 }

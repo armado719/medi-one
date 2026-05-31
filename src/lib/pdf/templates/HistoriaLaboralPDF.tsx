@@ -4,7 +4,6 @@ import {
   PDFHeader,
   PDFFooter,
   PDFField,
-  C,
 } from '@/lib/pdf/base'
 import { formatDate } from '@/lib/utils'
 import type { HistoriaLaboralData } from '@/types'
@@ -28,34 +27,24 @@ interface Props {
   }
 }
 
-const aptitudLabel: Record<string, string> = {
-  APTO: 'APTO',
-  APTO_CON_RESTRICCIONES: 'APTO CON RESTRICCIONES',
-  NO_APTO: 'NO APTO',
-}
-
-const aptitudStyle: Record<string, object> = {
-  APTO: s.badgeApto,
-  APTO_CON_RESTRICCIONES: s.badgeRestriccion,
-  NO_APTO: s.badgeNoApto,
-}
-
-const examenLabel: Record<string, string> = {
-  INGRESO: 'Ingreso',
-  PERIODICO: 'Periódico',
-  RETIRO: 'Retiro',
-  POST_INCAPACIDAD: 'Post-incapacidad',
+const aptitudStyle: Record<string, import('@react-pdf/types').Style> = {
+  'Apto': s.badgeApto,
+  'Apto con restricciones': s.badgeRestriccion,
+  'No apto': s.badgeNoApto,
 }
 
 export function HistoriaLaboralPDF({ record }: Props) {
   const d = record.data
+  const ef = d.examenFisico
   const fecha = formatDate(new Date(record.createdAt))
   const paciente = `${record.patient.firstName} ${record.patient.lastName}`
   const doc = `${record.patient.documentType}: ${record.patient.documentNumber}`
 
   const riesgosActivos = Object.entries(d.riesgos ?? {})
     .filter(([, v]) => (v as { activo?: boolean }).activo)
-    .map(([k]) => k)
+    .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
+
+  const aptitud = d.conclusion?.aptitud ?? 'Apto'
 
   return (
     <Document
@@ -81,7 +70,7 @@ export function HistoriaLaboralPDF({ record }: Props) {
                 style={s.col3}
               />
               <PDFField label="Sexo" value={record.patient.sex} style={s.col3} />
-              <PDFField label="EPS" value={record.patient.eps} style={s.col3} />
+              <PDFField label="EPS" value={record.patient.eps ?? undefined} style={s.col3} />
             </View>
           </View>
 
@@ -90,16 +79,12 @@ export function HistoriaLaboralPDF({ record }: Props) {
             <Text style={s.sectionTitle}>Datos Laborales</Text>
             <View style={s.row}>
               <PDFField label="Empresa" value={d.empresa} style={s.col2} />
-              <PDFField label="NIT" value={d.nitEmpresa} style={s.col2} />
+              <PDFField label="NIT" value={d.nit} style={s.col2} />
             </View>
             <View style={s.row}>
               <PDFField label="Cargo" value={d.cargo} style={s.col3} />
               <PDFField label="Área" value={d.area} style={s.col3} />
-              <PDFField
-                label="Tipo de examen"
-                value={examenLabel[d.tipoExamen ?? ''] ?? d.tipoExamen}
-                style={s.col3}
-              />
+              <PDFField label="Tipo de examen" value={d.tipoExamen} style={s.col3} />
             </View>
           </View>
 
@@ -116,16 +101,22 @@ export function HistoriaLaboralPDF({ record }: Props) {
           {/* Antecedentes */}
           <View style={s.section}>
             <Text style={s.sectionTitle}>Antecedentes</Text>
-            {d.antecedentesPersonales && (
+            {d.antecedentesPer?.patologicos && (
               <>
-                <Text style={[s.fieldLabel, { marginBottom: 3 }]}>Personales</Text>
-                <Text style={s.textBlock}>{d.antecedentesPersonales}</Text>
+                <Text style={[s.fieldLabel, { marginBottom: 3 }]}>Patológicos</Text>
+                <Text style={s.textBlock}>{d.antecedentesPer.patologicos}</Text>
               </>
             )}
-            {d.antecedentesFamiliares && (
+            {d.antecedentesPer?.quirurgicos && (
+              <>
+                <Text style={[s.fieldLabel, { marginTop: 6, marginBottom: 3 }]}>Quirúrgicos</Text>
+                <Text style={s.textBlock}>{d.antecedentesPer.quirurgicos}</Text>
+              </>
+            )}
+            {d.antecedentesFam && (
               <>
                 <Text style={[s.fieldLabel, { marginTop: 6, marginBottom: 3 }]}>Familiares</Text>
-                <Text style={s.textBlock}>{d.antecedentesFamiliares}</Text>
+                <Text style={s.textBlock}>{d.antecedentesFam}</Text>
               </>
             )}
           </View>
@@ -134,10 +125,10 @@ export function HistoriaLaboralPDF({ record }: Props) {
           <View style={s.section}>
             <Text style={s.sectionTitle}>Examen Físico — Signos Vitales</Text>
             <View style={s.row}>
-              <PDFField label="TA (mmHg)" value={d.tensionArterial} style={s.col4} />
-              <PDFField label="FC (lpm)" value={d.frecuenciaCardiaca} style={s.col4} />
-              <PDFField label="Peso (kg)" value={d.peso} style={s.col4} />
-              <PDFField label="Talla (cm)" value={d.talla} style={s.col4} />
+              <PDFField label="TA (mmHg)" value={ef?.ta} style={s.col4} />
+              <PDFField label="FC (lpm)" value={ef?.fc?.toString()} style={s.col4} />
+              <PDFField label="Peso (kg)" value={ef?.peso?.toString()} style={s.col4} />
+              <PDFField label="Talla (cm)" value={ef?.talla?.toString()} style={s.col4} />
             </View>
           </View>
 
@@ -152,19 +143,14 @@ export function HistoriaLaboralPDF({ record }: Props) {
                   <Text style={s.tableHeaderCell}>Referencia</Text>
                   <Text style={s.tableHeaderCell}>Anormal</Text>
                 </View>
-                {(d.paraclínicos as Array<{ nombre: string; resultado: string; referencia: string; anormal: boolean }>).map(
-                  (p, i) => (
-                    <View
-                      key={i}
-                      style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}
-                    >
-                      <Text style={[s.tableCell, { flex: 2 }]}>{p.nombre}</Text>
-                      <Text style={s.tableCell}>{p.resultado}</Text>
-                      <Text style={s.tableCell}>{p.referencia}</Text>
-                      <Text style={s.tableCell}>{p.anormal ? 'Sí' : 'No'}</Text>
-                    </View>
-                  )
-                )}
+                {d.paraclínicos.map((p, i) => (
+                  <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
+                    <Text style={[s.tableCell, { flex: 2 }]}>{p.nombre}</Text>
+                    <Text style={s.tableCell}>{p.resultado}</Text>
+                    <Text style={s.tableCell}>{p.valorReferencia}</Text>
+                    <Text style={s.tableCell}>{p.anormal ? 'Sí' : 'No'}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           )}
@@ -173,10 +159,10 @@ export function HistoriaLaboralPDF({ record }: Props) {
           <View style={s.section}>
             <Text style={s.sectionTitle}>Diagnóstico</Text>
             <View style={s.row}>
-              <PDFField label="Código CIE-10" value={d.diagnosticoCIE10} style={{ width: 120 }} />
+              <PDFField label="Código CIE-10" value={d.diagnostico?.cie10} style={{ width: 120 }} />
               <PDFField
                 label="Descripción"
-                value={d.diagnosticoDescripcion}
+                value={d.diagnostico?.descripcion}
                 style={{ flex: 1, marginLeft: 12 }}
               />
             </View>
@@ -189,20 +175,20 @@ export function HistoriaLaboralPDF({ record }: Props) {
               <Text style={[s.fieldLabel, { marginRight: 8, marginBottom: 0 }]}>
                 Concepto médico:
               </Text>
-              <Text style={aptitudStyle[d.conclusion ?? 'APTO'] ?? s.badgeApto}>
-                {aptitudLabel[d.conclusion ?? 'APTO']}
+              <Text style={aptitudStyle[aptitud] ?? s.badgeApto}>
+                {aptitud.toUpperCase()}
               </Text>
             </View>
-            {d.restricciones && (
+            {d.conclusion?.restricciones && (
               <>
                 <Text style={[s.fieldLabel, { marginBottom: 3 }]}>Restricciones</Text>
-                <Text style={s.textBlock}>{d.restricciones}</Text>
+                <Text style={s.textBlock}>{d.conclusion.restricciones}</Text>
               </>
             )}
-            {d.recomendaciones && (
+            {d.conclusion?.recomendaciones && (
               <>
                 <Text style={[s.fieldLabel, { marginTop: 6, marginBottom: 3 }]}>Recomendaciones</Text>
-                <Text style={s.textBlock}>{d.recomendaciones}</Text>
+                <Text style={s.textBlock}>{d.conclusion.recomendaciones}</Text>
               </>
             )}
           </View>

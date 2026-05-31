@@ -16,7 +16,18 @@ import { MovimientoModal } from '@/components/modules/inventario/MovimientoModal
 import { ProductoForm } from '@/components/modules/inventario/ProductoForm'
 import type { Product, InventoryMovement } from '@/types'
 
-interface ProductDetail extends Product {
+interface ProductDetail {
+  id: string
+  name: string
+  description?: string | null
+  unit: string
+  stockCurrent: number
+  stockMinimum: number
+  unitPrice: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
   movements: (InventoryMovement & { user: { name: string } })[]
 }
 

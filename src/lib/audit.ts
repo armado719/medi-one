@@ -24,7 +24,7 @@ export async function logAudit({
         action,
         entity,
         entityId,
-        changes: changes ? changes : undefined,
+        changes: changes ? (changes as import('@prisma/client').Prisma.InputJsonValue) : undefined,
         ip: ip ?? 'unknown',
       },
     })
