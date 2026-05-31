@@ -80,3 +80,81 @@
 .rbc-off-range-bg {
   background-color: rgba(248, 244, 243, 0.5);
 }
+
+/* ============================================================
+   ESTILOS DE IMPRESIÓN
+   Se aplican al imprimir desde el navegador (Ctrl+P / window.print())
+   ============================================================ */
+@media print {
+  /* Ocultar elementos de navegación */
+  nav,
+  aside,
+  header,
+  [data-sidebar],
+  [data-header],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Fondo blanco, texto negro */
+  body {
+    background: white !important;
+    color: #000 !important;
+    font-size: 11pt;
+  }
+
+  /* Quitar sombras y bordes de tarjetas */
+  .shadow-sm,
+  .shadow,
+  .shadow-md,
+  .shadow-lg {
+    box-shadow: none !important;
+  }
+
+  /* Membrete de impresión */
+  .print-header {
+    display: block !important;
+    border-bottom: 2px solid #C8857A;
+    padding-bottom: 12pt;
+    margin-bottom: 16pt;
+  }
+
+  .print-header h1 {
+    font-size: 20pt;
+    color: #C8857A;
+    letter-spacing: 2pt;
+  }
+
+  .print-header p {
+    font-size: 10pt;
+    color: #7A5A58;
+  }
+
+  /* Mostrar membrete solo al imprimir */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Evitar cortes de página en secciones */
+  .page-break-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* Forzar salto de página */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  /* Márgenes de impresión */
+  @page {
+    margin: 2cm;
+    size: A4;
+  }
+
+  /* Botones: ocultar al imprimir */
+  button,
+  a[role="button"],
+  [data-print-hide] {
+    display: none !important;
+  }
+}

@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DownloadPrintButtons } from '@/components/shared/DownloadPrintButtons'
 import { formatDate } from '@/lib/utils'
 import type { ClinicalRecord } from '@/types'
 
@@ -55,7 +56,7 @@ export default function HistoriaEsteticaDetailPage() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="font-display text-2xl font-semibold text-content">
             Historia Estética
           </h1>
@@ -64,6 +65,10 @@ export default function HistoriaEsteticaDetailPage() {
             {formatDate(record.createdAt)}
           </p>
         </div>
+        <DownloadPrintButtons
+          downloadUrl={`/api/pdf/historia/${id}`}
+          filename={`historia-estetica-${id}.pdf`}
+        />
       </div>
 
       <Card>
