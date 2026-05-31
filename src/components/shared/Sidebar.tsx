@@ -143,8 +143,9 @@ export function Sidebar() {
     return () => clearInterval(interval)
   }, [userRole])
 
+  // While session loads (userRole undefined) show all items to avoid flash
   const filteredNavItems = navItems.filter(
-    (item) => !item.roles || (userRole && item.roles.includes(userRole))
+    (item) => !item.roles || !userRole || item.roles.includes(userRole)
   )
 
   const isActive = (href: string) => {

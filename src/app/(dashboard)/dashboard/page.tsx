@@ -97,16 +97,15 @@ export default function DashboardPage() {
   const isMedico = userRole === 'MEDICO'
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      fetch('/api/dashboard')
-        .then((r) => r.json())
-        .then(setData)
-        .catch(() => null)
-        .finally(() => setLoading(false))
-    }
+    if (status === 'loading') return
+    fetch('/api/dashboard')
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => null)
+      .finally(() => setLoading(false))
   }, [status])
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return <DashboardSkeleton />
   }
 
