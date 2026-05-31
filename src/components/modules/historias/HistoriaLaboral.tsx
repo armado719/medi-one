@@ -43,11 +43,41 @@ const RIESGOS = [
   { key: 'electrico', label: 'Eléctrico' },
 ]
 
+const TABS = [
+  'laboral',
+  'riesgos',
+  'antecedentes',
+  'revision',
+  'examen',
+  'paraclínicos',
+  'diagnostico',
+  'conclusion',
+  'firma',
+] as const
+
+type TabValue = typeof TABS[number]
+
+const TOTAL_TABS = TABS.length
+
 export function HistoriaLaboral() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pacienteId = searchParams.get('pacienteId') || ''
-  const [activeTab, setActiveTab] = useState('laboral')
+  const [activeTab, setActiveTab] = useState<TabValue>('laboral')
+
+  const currentTabIndex = TABS.indexOf(activeTab)
+
+  const goToNextTab = () => {
+    if (currentTabIndex < TOTAL_TABS - 1) {
+      setActiveTab(TABS[currentTabIndex + 1])
+    }
+  }
+
+  const goToPrevTab = () => {
+    if (currentTabIndex > 0) {
+      setActiveTab(TABS[currentTabIndex - 1])
+    }
+  }
 
   const {
     register,
@@ -143,6 +173,48 @@ export function HistoriaLaboral() {
     }
   }
 
+  /** Progress bar + step counter shown above the tab list */
+  const ProgressHeader = () => (
+    <div className="flex items-center justify-between mb-3">
+      <span className="text-sm text-content-muted">
+        Sección <strong>{currentTabIndex + 1}</strong> de {TOTAL_TABS}
+      </span>
+      <div className="flex gap-1">
+        {Array.from({ length: TOTAL_TABS }, (_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 w-8 rounded-full transition-colors ${
+              i <= currentTabIndex ? 'bg-brand' : 'bg-border'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+
+  /** Navigation buttons at the bottom of each tab */
+  const NavButtons = ({ isLast = false }: { isLast?: boolean }) => (
+    <div className="flex justify-between mt-6 pt-4 border-t border-border">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={goToPrevTab}
+        disabled={currentTabIndex === 0}
+      >
+        ← Anterior
+      </Button>
+      {isLast ? (
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Guardando...' : 'Guardar Historia'}
+        </Button>
+      ) : (
+        <Button type="button" onClick={goToNextTab}>
+          Siguiente →
+        </Button>
+      )}
+    </div>
+  )
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Patient selector */}
@@ -166,7 +238,9 @@ export function HistoriaLaboral() {
         </CardContent>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <ProgressHeader />
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
         <TabsList className="flex flex-wrap h-auto gap-1 p-2">
           <TabsTrigger value="laboral">1. Datos Laborales</TabsTrigger>
           <TabsTrigger value="riesgos">2. Riesgos</TabsTrigger>
@@ -229,6 +303,7 @@ export function HistoriaLaboral() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 2: Riesgos Ocupacionales */}
@@ -265,6 +340,7 @@ export function HistoriaLaboral() {
               ))}
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 3: Antecedentes */}
@@ -303,6 +379,7 @@ export function HistoriaLaboral() {
               />
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 4: Revisión por Sistemas */}
@@ -337,6 +414,7 @@ export function HistoriaLaboral() {
               ))}
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 5: Examen Físico */}
@@ -422,6 +500,7 @@ export function HistoriaLaboral() {
               ))}
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 6: Paraclínicos */}
@@ -501,6 +580,7 @@ export function HistoriaLaboral() {
               )}
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 7: Diagnóstico */}
@@ -527,6 +607,7 @@ export function HistoriaLaboral() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 8: Conclusión */}
@@ -577,6 +658,7 @@ export function HistoriaLaboral() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 9: Firma */}
@@ -609,7 +691,7 @@ export function HistoriaLaboral() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3">
+              <div className="flex items-center gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -617,12 +699,10 @@ export function HistoriaLaboral() {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Guardando...' : 'Guardar Historia Laboral'}
-                </Button>
               </div>
             </CardContent>
           </Card>
+          <NavButtons isLast />
         </TabsContent>
       </Tabs>
     </form>

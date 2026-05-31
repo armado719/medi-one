@@ -35,17 +35,46 @@ interface HistoricalDataPoint {
   glucosa: number | null
 }
 
+const TABS = [
+  'signos',
+  'lipidico',
+  'habitos',
+  'antecedentes',
+  'framingham',
+  'diagnostico',
+  'graficas',
+  'firma',
+] as const
+
+type TabValue = typeof TABS[number]
+
+const TOTAL_TABS = TABS.length
+
 export function HistoriaCardiovascular() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pacienteId = searchParams.get('pacienteId') || ''
-  const [activeTab, setActiveTab] = useState('signos')
+  const [activeTab, setActiveTab] = useState<TabValue>('signos')
   const [framinghamResult, setFraminghamResult] = useState<{
     score: number
     riesgo: 'Bajo' | 'Moderado' | 'Alto'
     porcentaje: number
   } | null>(null)
   const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([])
+
+  const currentTabIndex = TABS.indexOf(activeTab)
+
+  const goToNextTab = () => {
+    if (currentTabIndex < TOTAL_TABS - 1) {
+      setActiveTab(TABS[currentTabIndex + 1])
+    }
+  }
+
+  const goToPrevTab = () => {
+    if (currentTabIndex > 0) {
+      setActiveTab(TABS[currentTabIndex - 1])
+    }
+  }
 
   const {
     register,
@@ -202,6 +231,47 @@ export function HistoriaCardiovascular() {
       : 'destructive'
     : 'secondary'
 
+  /** Progress bar shown above the tab list */
+  const ProgressHeader = () => (
+    <div className="flex items-center justify-between mb-3">
+      <span className="text-sm text-content-muted">
+        Sección <strong>{currentTabIndex + 1}</strong> de {TOTAL_TABS}
+      </span>
+      <div className="flex gap-1">
+        {Array.from({ length: TOTAL_TABS }, (_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 w-8 rounded-full transition-colors ${
+              i <= currentTabIndex ? 'bg-brand' : 'bg-border'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+
+  const NavButtons = ({ isLast = false }: { isLast?: boolean }) => (
+    <div className="flex justify-between mt-6 pt-4 border-t border-border">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={goToPrevTab}
+        disabled={currentTabIndex === 0}
+      >
+        ← Anterior
+      </Button>
+      {isLast ? (
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Guardando...' : 'Guardar Historia'}
+        </Button>
+      ) : (
+        <Button type="button" onClick={goToNextTab}>
+          Siguiente →
+        </Button>
+      )}
+    </div>
+  )
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Patient ID */}
@@ -225,7 +295,9 @@ export function HistoriaCardiovascular() {
         </CardContent>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <ProgressHeader />
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
         <TabsList className="flex flex-wrap h-auto gap-1 p-2">
           <TabsTrigger value="signos">1. Signos Vitales</TabsTrigger>
           <TabsTrigger value="lipidico">2. Perfil Lipídico</TabsTrigger>
@@ -346,6 +418,7 @@ export function HistoriaCardiovascular() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 2: Perfil Lipídico */}
@@ -393,6 +466,7 @@ export function HistoriaCardiovascular() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 3: Hábitos */}
@@ -478,6 +552,7 @@ export function HistoriaCardiovascular() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 4: Antecedentes */}
@@ -528,6 +603,7 @@ export function HistoriaCardiovascular() {
               />
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 5: Score Framingham */}
@@ -599,6 +675,7 @@ export function HistoriaCardiovascular() {
               )}
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 6: Diagnóstico y Plan */}
@@ -626,6 +703,7 @@ export function HistoriaCardiovascular() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 7: Gráficas de Evolución */}
@@ -703,6 +781,7 @@ export function HistoriaCardiovascular() {
               )}
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 8: Firma */}
@@ -733,7 +812,7 @@ export function HistoriaCardiovascular() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3">
+              <div className="flex items-center gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -741,12 +820,10 @@ export function HistoriaCardiovascular() {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Guardando...' : 'Guardar Historia Cardiovascular'}
-                </Button>
               </div>
             </CardContent>
           </Card>
+          <NavButtons isLast />
         </TabsContent>
       </Tabs>
     </form>

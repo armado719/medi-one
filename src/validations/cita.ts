@@ -30,6 +30,14 @@ export const citaSchema = z.object({
     .optional()
     .or(z.literal('')),
   whatsappReminder: z.boolean().default(false),
+  primeraVez: z.boolean().default(false),
+  valorConsulta: z
+    .number()
+    .min(0, 'El valor no puede ser negativo')
+    .max(99999999, 'Valor demasiado alto')
+    .nullable()
+    .optional(),
+  prioridad: z.boolean().default(false),
 })
 
 export type CitaFormData = z.infer<typeof citaSchema>

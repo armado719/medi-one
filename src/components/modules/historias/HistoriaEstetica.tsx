@@ -43,14 +43,44 @@ interface PreviewPhoto {
   file?: File
 }
 
+const TABS = [
+  'motivo',
+  'antecedentes',
+  'zonas',
+  'procedimiento',
+  'materiales',
+  'fotografias',
+  'evolucion',
+  'consentimiento',
+  'firma',
+] as const
+
+type TabValue = typeof TABS[number]
+
+const TOTAL_TABS = TABS.length
+
 export function HistoriaEstetica() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pacienteId = searchParams.get('pacienteId') || ''
-  const [activeTab, setActiveTab] = useState('motivo')
+  const [activeTab, setActiveTab] = useState<TabValue>('motivo')
   const [photos, setPhotos] = useState<PreviewPhoto[]>([])
   const [selectedCategory, setSelectedCategory] = useState<FotoCategoria>('Antes')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const currentTabIndex = TABS.indexOf(activeTab)
+
+  const goToNextTab = () => {
+    if (currentTabIndex < TOTAL_TABS - 1) {
+      setActiveTab(TABS[currentTabIndex + 1])
+    }
+  }
+
+  const goToPrevTab = () => {
+    if (currentTabIndex > 0) {
+      setActiveTab(TABS[currentTabIndex - 1])
+    }
+  }
 
   const {
     register,
@@ -150,6 +180,47 @@ export function HistoriaEstetica() {
     }
   }
 
+  /** Progress bar shown above the tab list */
+  const ProgressHeader = () => (
+    <div className="flex items-center justify-between mb-3">
+      <span className="text-sm text-content-muted">
+        Sección <strong>{currentTabIndex + 1}</strong> de {TOTAL_TABS}
+      </span>
+      <div className="flex gap-1">
+        {Array.from({ length: TOTAL_TABS }, (_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 w-8 rounded-full transition-colors ${
+              i <= currentTabIndex ? 'bg-brand' : 'bg-border'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+
+  const NavButtons = ({ isLast = false }: { isLast?: boolean }) => (
+    <div className="flex justify-between mt-6 pt-4 border-t border-border">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={goToPrevTab}
+        disabled={currentTabIndex === 0}
+      >
+        ← Anterior
+      </Button>
+      {isLast ? (
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Guardando...' : 'Guardar Historia'}
+        </Button>
+      ) : (
+        <Button type="button" onClick={goToNextTab}>
+          Siguiente →
+        </Button>
+      )}
+    </div>
+  )
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Patient ID */}
@@ -173,7 +244,9 @@ export function HistoriaEstetica() {
         </CardContent>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <ProgressHeader />
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
         <TabsList className="flex flex-wrap h-auto gap-1 p-2">
           <TabsTrigger value="motivo">1. Motivo</TabsTrigger>
           <TabsTrigger value="antecedentes">2. Antecedentes</TabsTrigger>
@@ -208,6 +281,7 @@ export function HistoriaEstetica() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 2: Antecedentes */}
@@ -247,6 +321,7 @@ export function HistoriaEstetica() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 3: Zonas a Tratar */}
@@ -281,6 +356,7 @@ export function HistoriaEstetica() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 4: Procedimiento */}
@@ -313,6 +389,7 @@ export function HistoriaEstetica() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 5: Materiales */}
@@ -388,6 +465,7 @@ export function HistoriaEstetica() {
               )}
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 6: Fotografías */}
@@ -487,6 +565,7 @@ export function HistoriaEstetica() {
               )}
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 7: Evolución */}
@@ -513,6 +592,7 @@ export function HistoriaEstetica() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 8: Consentimiento */}
@@ -549,6 +629,7 @@ export function HistoriaEstetica() {
               </div>
             </CardContent>
           </Card>
+          <NavButtons />
         </TabsContent>
 
         {/* Tab 9: Firma */}
@@ -579,7 +660,7 @@ export function HistoriaEstetica() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3">
+              <div className="flex items-center gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -587,12 +668,10 @@ export function HistoriaEstetica() {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Guardando...' : 'Guardar Historia Estética'}
-                </Button>
               </div>
             </CardContent>
           </Card>
+          <NavButtons isLast />
         </TabsContent>
       </Tabs>
     </form>

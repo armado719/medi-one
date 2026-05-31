@@ -93,6 +93,21 @@ export async function PUT(
       eps: data.eps || null,
       occupation: data.occupation || null,
       status: data.status,
+      // Extended fields
+      primerNombre: data.primerNombre || null,
+      segundoNombre: data.segundoNombre || null,
+      primerApellido: data.primerApellido || null,
+      segundoApellido: data.segundoApellido || null,
+      estadoCivil: data.estadoCivil || null,
+      zona: data.zona || null,
+      departamento: data.departamento || null,
+      municipio: data.municipio || null,
+      telefonoAlternativo: data.telefonoAlternativo || null,
+      religion: data.religion || null,
+      responsableNombre: data.responsableNombre || null,
+      responsableParentesco: data.responsableParentesco || null,
+      responsableTelefono: data.responsableTelefono || null,
+      observaciones: data.observaciones || null,
     },
   })
 

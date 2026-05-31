@@ -101,6 +101,9 @@ export async function POST(request: NextRequest) {
       status: data.status,
       notes: data.notes || null,
       whatsappReminder: data.whatsappReminder,
+      primeraVez: data.primeraVez ?? false,
+      valorConsulta: data.valorConsulta ?? null,
+      prioridad: data.prioridad ?? false,
     },
     include: {
       patient: {

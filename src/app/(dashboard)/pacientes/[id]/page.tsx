@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { ArrowLeft, FileText, Calendar, Trash2 } from 'lucide-react'
+import { ArrowLeft, FileText, Calendar, Trash2, AlertCircle, AlertTriangle, Pill } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -59,6 +59,35 @@ const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
   PENDIENTE: 'Pendiente',
   CANCELADA: 'Cancelada',
   NO_ASISTIO: 'No asistió',
+}
+
+/** Extract alergias from the most recent ESTETICA or CARDIOVASCULAR record */
+function extractAlergias(records: (ClinicalRecord & { user: { name: string } })[]): string {
+  const relevant = records.find((r) => r.type === 'ESTETICA' || r.type === 'CARDIOVASCULAR')
+  if (!relevant) return 'No registrado'
+  const d = relevant.data as Record<string, unknown>
+  // ESTETICA stores antecedentes.alergias
+  if (relevant.type === 'ESTETICA') {
+    const ant = d.antecedentes as Record<string, string> | undefined
+    return ant?.alergias || 'No registrado'
+  }
+  return 'No registrado'
+}
+
+/** Extract medicamentos actuales from the most recent ESTETICA record */
+function extractMedicamentos(records: (ClinicalRecord & { user: { name: string } })[]): string {
+  const estetica = records.find((r) => r.type === 'ESTETICA')
+  if (!estetica) return 'No registrado'
+  const d = estetica.data as Record<string, unknown>
+  const ant = d.antecedentes as Record<string, string> | undefined
+  return ant?.medicamentosActuales || 'No registrado'
+}
+
+/** Background color class for timeline dots by record type */
+function timelineDotClass(type: string): string {
+  if (type === 'LABORAL') return 'bg-brand'
+  if (type === 'ESTETICA') return 'bg-purple-500'
+  return 'bg-red-500'
 }
 
 export default function PacienteDetailPage() {
@@ -125,7 +154,17 @@ export default function PacienteDetailPage() {
 
   if (!patient) return null
 
-  const fullName = `${patient.firstName} ${patient.lastName}`
+  const fullName = [
+    patient.primerNombre || patient.firstName,
+    patient.segundoNombre,
+    patient.primerApellido || patient.lastName,
+    patient.segundoApellido,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const alergias = extractAlergias(patient.clinicalRecords)
+  const medicamentos = extractMedicamentos(patient.clinicalRecords)
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -208,8 +247,23 @@ export default function PacienteDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6">
-                <InfoItem label="Nombres" value={patient.firstName} />
-                <InfoItem label="Apellidos" value={patient.lastName} />
+                {patient.primerNombre ? (
+                  <>
+                    <InfoItem label="Primer nombre" value={patient.primerNombre} />
+                    {patient.segundoNombre && (
+                      <InfoItem label="Segundo nombre" value={patient.segundoNombre} />
+                    )}
+                    <InfoItem label="Primer apellido" value={patient.primerApellido || patient.lastName} />
+                    {patient.segundoApellido && (
+                      <InfoItem label="Segundo apellido" value={patient.segundoApellido} />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <InfoItem label="Nombres" value={patient.firstName} />
+                    <InfoItem label="Apellidos" value={patient.lastName} />
+                  </>
+                )}
                 <InfoItem
                   label="Documento"
                   value={`${patient.documentType} ${patient.documentNumber}`}
@@ -219,19 +273,129 @@ export default function PacienteDetailPage() {
                   value={`${formatDate(patient.birthDate)} (${calculateAge(patient.birthDate)} años)`}
                 />
                 <InfoItem label="Sexo" value={SEX_LABELS[patient.sex]} />
+                {patient.estadoCivil && (
+                  <InfoItem label="Estado civil" value={patient.estadoCivil} />
+                )}
                 <InfoItem label="Teléfono" value={patient.phone} />
+                {patient.telefonoAlternativo && (
+                  <InfoItem label="Tel. alternativo" value={patient.telefonoAlternativo} />
+                )}
                 {patient.email && <InfoItem label="Email" value={patient.email} />}
+                {patient.departamento && (
+                  <InfoItem label="Departamento" value={patient.departamento} />
+                )}
+                {(patient.municipio || patient.city) && (
+                  <InfoItem label="Municipio/Ciudad" value={patient.municipio || patient.city || ''} />
+                )}
                 {patient.address && (
                   <InfoItem label="Dirección" value={patient.address} />
                 )}
-                {patient.city && <InfoItem label="Ciudad" value={patient.city} />}
                 {patient.eps && <InfoItem label="EPS" value={patient.eps} />}
                 {patient.occupation && (
                   <InfoItem label="Ocupación" value={patient.occupation} />
                 )}
+                {patient.religion && (
+                  <InfoItem label="Religión" value={patient.religion} />
+                )}
               </div>
             </CardContent>
           </Card>
+
+          {/* Alert cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Observaciones */}
+            <div className="rounded-xl border-l-4 border-amber-400 bg-amber-50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="w-4 h-4 text-amber-600" />
+                <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">
+                  Observaciones
+                </span>
+              </div>
+              <p className="text-sm text-amber-900">
+                {patient.observaciones || 'Sin observaciones registradas'}
+              </p>
+            </div>
+
+            {/* Alergias */}
+            <div className="rounded-xl border-l-4 border-red-400 bg-red-50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+                <span className="text-xs font-semibold text-red-700 uppercase tracking-wide">
+                  Alergias
+                </span>
+              </div>
+              <p className="text-sm text-red-900">{alergias}</p>
+            </div>
+
+            {/* Medicamentos actuales */}
+            <div className="rounded-xl border-l-4 border-blue-400 bg-blue-50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Pill className="w-4 h-4 text-blue-600" />
+                <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                  Medicamentos actuales
+                </span>
+              </div>
+              <p className="text-sm text-blue-900">{medicamentos}</p>
+            </div>
+          </div>
+
+          {/* Consultation timeline */}
+          {patient.clinicalRecords.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold text-content-muted uppercase tracking-wide">
+                  Línea de tiempo clínica
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex items-start gap-0 min-w-max">
+                    {[...patient.clinicalRecords].reverse().map((record, i, arr) => (
+                      <div key={record.id} className="flex items-center">
+                        <div
+                          className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() =>
+                            router.push(
+                              `/historias/${record.type.toLowerCase()}/${record.id}`
+                            )
+                          }
+                        >
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${timelineDotClass(record.type)}`}
+                          >
+                            {record.type[0]}
+                          </div>
+                          <span className="text-xs text-content-muted mt-1 text-center max-w-[72px]">
+                            {formatDate(record.createdAt)}
+                          </span>
+                          <span className="text-xs text-content-muted text-center max-w-[72px] truncate">
+                            {record.user?.name?.split(' ')[0]}
+                          </span>
+                        </div>
+                        {i < arr.length - 1 && (
+                          <div className="w-12 border-t-2 border-dashed border-border mx-1 mt-[-28px]" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 mt-3 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-brand" />
+                    <span className="text-xs text-content-muted">Laboral</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-purple-500" />
+                    <span className="text-xs text-content-muted">Estética</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <span className="text-xs text-content-muted">Cardiovascular</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Historias clínicas */}
           <Card>
