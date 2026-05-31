@@ -51,6 +51,35 @@ enum ClinicalRecordType {
   CARDIOVASCULAR
 }
 
+enum InvoiceStatus {
+  PENDIENTE
+  PAGADO
+  ANULADO
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  TRANSFERENCIA
+  TARJETA
+}
+
+enum EntryType {
+  INGRESO
+  EGRESO
+}
+
+enum MovementType {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+enum ConsentStatus {
+  PENDIENTE
+  FIRMADO
+  RECHAZADO
+}
+
 model User {
   id        String    @id @default(cuid())
   name      String    @db.VarChar(255)
@@ -62,9 +91,13 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  appointments    Appointment[]
-  clinicalRecords ClinicalRecord[]
-  auditLogs       AuditLog[]
+  appointments        Appointment[]
+  clinicalRecords     ClinicalRecord[]
+  auditLogs           AuditLog[]
+  invoices            Invoice[]
+  accountEntries      AccountEntry[]
+  prescriptions       Prescription[]
+  inventoryMovements  InventoryMovement[]
 
   @@map("users")
 }
@@ -91,6 +124,9 @@ model Patient {
 
   appointments    Appointment[]
   clinicalRecords ClinicalRecord[]
+  invoices        Invoice[]
+  prescriptions   Prescription[]
+  consentForms    ConsentForm[]
 
   @@unique([documentType, documentNumber])
   @@map("patients")
@@ -145,4 +181,165 @@ model AuditLog {
   user User @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  number        String        @unique
+  patientId     String
+  userId        String
+  appointmentId String?
+  status        InvoiceStatus @default(PENDIENTE)
+  paymentMethod PaymentMethod?
+  subtotal      Decimal       @db.Decimal(12,2)
+  discount      Decimal       @db.Decimal(12,2) @default(0)
+  discountType  String        @default("PORCENTAJE")
+  taxAmount     Decimal       @db.Decimal(12,2) @default(0)
+  total         Decimal       @db.Decimal(12,2)
+  notes         String?       @db.Text
+  cancelReason  String?       @db.Text
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
+  items        InvoiceItem[]
+  accountEntry AccountEntry?
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Decimal  @db.Decimal(10,2)
+  unitPrice   Decimal  @db.Decimal(12,2)
+  taxRate     Decimal  @db.Decimal(5,2) @default(0)
+  subtotal    Decimal  @db.Decimal(12,2)
+  createdAt   DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model AccountEntry {
+  id          String    @id @default(cuid())
+  invoiceId   String?   @unique
+  type        EntryType
+  amount      Decimal   @db.Decimal(12,2)
+  description String
+  date        DateTime  @default(now())
+  userId      String
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  invoice Invoice? @relation(fields: [invoiceId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@map("account_entries")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  unit         String   @default("und")
+  stockCurrent Decimal  @db.Decimal(10,2) @default(0)
+  stockMinimum Decimal  @db.Decimal(10,2) @default(0)
+  unitPrice    Decimal  @db.Decimal(12,2) @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  movements InventoryMovement[]
+
+  @@map("products")
+}
+
+model InventoryMovement {
+  id        String       @id @default(cuid())
+  productId String
+  type      MovementType
+  quantity  Decimal      @db.Decimal(10,2)
+  reason    String?
+  userId    String
+  createdAt DateTime     @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("inventory_movements")
+}
+
+model Prescription {
+  id           String   @id @default(cuid())
+  patientId    String
+  userId       String
+  recordId     String?
+  diagnosis    String?
+  instructions String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  patient Patient            @relation(fields: [patientId], references: [id])
+  user    User               @relation(fields: [userId], references: [id])
+  items   PrescriptionItem[]
+
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id             String   @id @default(cuid())
+  prescriptionId String
+  medication     String
+  concentration  String?
+  form           String?
+  dose           String
+  frequency      String
+  duration       String
+  route          String?
+  createdAt      DateTime @default(now())
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@map("prescription_items")
+}
+
+model ConsentTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  procedure String
+  content   String   @db.LongText
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  consents ConsentForm[]
+
+  @@map("consent_templates")
+}
+
+model ConsentForm {
+  id         String        @id @default(cuid())
+  templateId String
+  patientId  String
+  recordId   String?
+  status     ConsentStatus @default(PENDIENTE)
+  signedAt   DateTime?
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  deletedAt  DateTime?
+
+  template ConsentTemplate @relation(fields: [templateId], references: [id])
+  patient  Patient         @relation(fields: [patientId], references: [id])
+
+  @@map("consent_forms")
 }

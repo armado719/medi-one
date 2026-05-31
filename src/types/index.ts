@@ -1,4 +1,9 @@
 export type Role = 'MEDICO' | 'RECEPCIONISTA' | 'ADMINISTRADOR'
+export type InvoiceStatus = 'PENDIENTE' | 'PAGADO' | 'ANULADO'
+export type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA'
+export type EntryType = 'INGRESO' | 'EGRESO'
+export type MovementType = 'ENTRADA' | 'SALIDA' | 'AJUSTE'
+export type ConsentStatus = 'PENDIENTE' | 'FIRMADO' | 'RECHAZADO'
 export type DocumentType = 'CC' | 'CE' | 'PA' | 'TI'
 export type Sex = 'MASCULINO' | 'FEMENINO' | 'OTRO'
 export type PatientStatus = 'ACTIVO' | 'INACTIVO'
@@ -64,6 +69,115 @@ export interface PaginatedResponse<T> {
   page: number
   pageSize: number
   totalPages: number
+}
+
+// Phase 2 types
+
+export interface InvoiceItem {
+  id: string
+  invoiceId: string
+  description: string
+  quantity: number
+  unitPrice: number
+  taxRate: number
+  subtotal: number
+}
+
+export interface Invoice {
+  id: string
+  number: string
+  patientId: string
+  userId: string
+  appointmentId?: string | null
+  status: InvoiceStatus
+  paymentMethod?: PaymentMethod | null
+  subtotal: number
+  discount: number
+  discountType: string
+  taxAmount: number
+  total: number
+  notes?: string | null
+  cancelReason?: string | null
+  paidAt?: string | null
+  createdAt: string
+  updatedAt: string
+  patient?: Patient
+  items?: InvoiceItem[]
+}
+
+export interface Product {
+  id: string
+  name: string
+  description?: string | null
+  unit: string
+  stockCurrent: number
+  stockMinimum: number
+  unitPrice: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface InventoryMovement {
+  id: string
+  productId: string
+  type: MovementType
+  quantity: number
+  reason?: string | null
+  userId: string
+  createdAt: string
+  user?: { name: string }
+  product?: Product
+}
+
+export interface PrescriptionItem {
+  id: string
+  prescriptionId: string
+  medication: string
+  concentration?: string | null
+  form?: string | null
+  dose: string
+  frequency: string
+  duration: string
+  route?: string | null
+}
+
+export interface Prescription {
+  id: string
+  patientId: string
+  userId: string
+  recordId?: string | null
+  diagnosis?: string | null
+  instructions?: string | null
+  createdAt: string
+  updatedAt: string
+  patient?: Patient
+  user?: { name: string }
+  items?: PrescriptionItem[]
+}
+
+export interface ConsentTemplate {
+  id: string
+  name: string
+  procedure: string
+  content: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ConsentForm {
+  id: string
+  templateId: string
+  patientId: string
+  recordId?: string | null
+  status: ConsentStatus
+  signedAt?: string | null
+  notes?: string | null
+  createdAt: string
+  updatedAt: string
+  template?: ConsentTemplate
+  patient?: Patient
 }
 
 // Historia Laboral types
