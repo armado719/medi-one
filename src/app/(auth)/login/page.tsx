@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Stethoscope } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
+import Image from 'next/image'
 
 const loginSchema = z.object({
   email: z.string().email('Ingrese un email válido'),
@@ -66,16 +67,17 @@ export default function LoginPage() {
         <div className="bg-bg-surface border border-border rounded-2xl shadow-md p-8 sm:p-10">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand mb-4">
-              <Stethoscope className="w-8 h-8 text-white" />
+            <div className="flex justify-center mb-3">
+              <Image
+                src="/logo-dra.png"
+                alt="Dra. Alejandra Bárcenas"
+                width={280}
+                height={160}
+                className="object-contain"
+                priority
+              />
             </div>
-            <h1 className="font-display text-4xl font-semibold text-content tracking-wide">
-              MEDI ONE
-            </h1>
-            <p className="text-content-muted text-sm mt-1 font-sans">
-              Dra. Alejandra Bárcenas
-            </p>
-            <p className="text-content-muted text-xs mt-2 font-sans">
+            <p className="text-content-muted text-xs font-sans">
               Sistema de Gestión Médica
             </p>
           </div>
