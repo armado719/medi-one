@@ -34,6 +34,25 @@ export interface Patient {
   occupation?: string | null
   status: PatientStatus
   photoUrl?: string | null
+  // Extended personal fields
+  primerNombre?: string | null
+  segundoNombre?: string | null
+  primerApellido?: string | null
+  segundoApellido?: string | null
+  estadoCivil?: string | null
+  // Extended location fields
+  zona?: string | null
+  departamento?: string | null
+  municipio?: string | null
+  // Extended contact fields
+  telefonoAlternativo?: string | null
+  religion?: string | null
+  // Emergency contact
+  responsableNombre?: string | null
+  responsableParentesco?: string | null
+  responsableTelefono?: string | null
+  // Observations
+  observaciones?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -48,9 +67,13 @@ export interface Appointment {
   status: AppointmentStatus
   notes?: string | null
   whatsappReminder: boolean
+  primeraVez?: boolean
+  valorConsulta?: number | null
+  prioridad?: boolean
   createdAt: string
   updatedAt: string
   patient?: Patient
+  user?: { id: string; name: string }
 }
 
 export interface ClinicalRecord {

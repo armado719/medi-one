@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const pacienteSchema = z.object({
+  // Legacy fields — kept for backward compatibility
   firstName: z
     .string()
     .min(2, 'El nombre debe tener al menos 2 caracteres')
@@ -9,6 +10,29 @@ export const pacienteSchema = z.object({
     .string()
     .min(2, 'El apellido debe tener al menos 2 caracteres')
     .max(100, 'El apellido no puede superar 100 caracteres'),
+
+  // New split name fields
+  primerNombre: z
+    .string()
+    .min(2, 'El primer nombre debe tener al menos 2 caracteres')
+    .max(100)
+    .optional()
+    .or(z.literal('')),
+  segundoNombre: z.string().max(100).optional().or(z.literal('')),
+  primerApellido: z
+    .string()
+    .min(2, 'El primer apellido debe tener al menos 2 caracteres')
+    .max(100)
+    .optional()
+    .or(z.literal('')),
+  segundoApellido: z.string().max(100).optional().or(z.literal('')),
+
+  // Civil status
+  estadoCivil: z
+    .enum(['Soltero/a', 'Casado/a', 'Unión libre', 'Divorciado/a', 'Viudo/a'])
+    .optional()
+    .or(z.literal('')),
+
   documentType: z.enum(['CC', 'CE', 'PA', 'TI'], {
     required_error: 'Seleccione el tipo de documento',
   }),
@@ -35,6 +59,11 @@ export const pacienteSchema = z.object({
     .string()
     .length(10, 'El teléfono debe tener exactamente 10 dígitos')
     .regex(/^3\d{9}$/, 'El teléfono debe empezar con 3 y tener 10 dígitos'),
+  telefonoAlternativo: z
+    .string()
+    .max(20)
+    .optional()
+    .or(z.literal('')),
   email: z
     .string()
     .email('Ingrese un email válido')
@@ -42,8 +71,27 @@ export const pacienteSchema = z.object({
     .or(z.literal('')),
   address: z.string().max(500, 'La dirección no puede superar 500 caracteres').optional().or(z.literal('')),
   city: z.string().max(100, 'La ciudad no puede superar 100 caracteres').optional().or(z.literal('')),
+
+  // Location fields
+  zona: z.enum(['Urbana', 'Rural']).optional().or(z.literal('')),
+  departamento: z.string().max(100).optional().or(z.literal('')),
+  municipio: z.string().max(100).optional().or(z.literal('')),
+
   eps: z.string().max(255, 'La EPS no puede superar 255 caracteres').optional().or(z.literal('')),
   occupation: z.string().max(255, 'La ocupación no puede superar 255 caracteres').optional().or(z.literal('')),
+  religion: z.string().max(100).optional().or(z.literal('')),
+
+  // Emergency contact
+  responsableNombre: z.string().max(255).optional().or(z.literal('')),
+  responsableParentesco: z
+    .enum(['Padre/Madre', 'Hijo/a', 'Cónyuge/Pareja', 'Hermano/a', 'Otro'])
+    .optional()
+    .or(z.literal('')),
+  responsableTelefono: z.string().max(20).optional().or(z.literal('')),
+
+  // Observations
+  observaciones: z.string().max(2000).optional().or(z.literal('')),
+
   status: z.enum(['ACTIVO', 'INACTIVO']).default('ACTIVO'),
 })
 
