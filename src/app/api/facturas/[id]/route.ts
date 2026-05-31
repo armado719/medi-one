@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { markPaidSchema, cancelInvoiceSchema } from '@/validations/factura'
+import { logAudit } from '@/lib/audit'
 
 export async function GET(
   _req: NextRequest,
@@ -92,6 +93,16 @@ export async function PUT(
         cancelReason: parsed.data.cancelReason,
       },
     })
+
+    await logAudit({
+      userId: session.user.id,
+      action: 'DELETE',
+      entity: 'Invoice',
+      entityId: params.id,
+      changes: { cancelReason: parsed.data.cancelReason },
+      ip: request.headers.get('x-forwarded-for') ?? undefined,
+    })
+
     return NextResponse.json(updated)
   }
 

@@ -343,3 +343,34 @@ model ConsentForm {
 
   @@map("consent_forms")
 }
+
+model SystemConfig {
+  id                String   @id @default(cuid())
+  clinicName        String   @default("MEDI ONE")
+  clinicAddress     String?
+  clinicCity        String?
+  clinicPhone       String?
+  clinicEmail       String?
+  clinicNit         String?
+  clinicWebsite     String?
+  doctorName        String   @default("Dra. Alejandra Bárcenas")
+  doctorSpecialties String?
+  doctorLicense     String?
+  doctorCardNum     String?
+  signatureUrl      String?
+  logoUrl           String?
+  updatedAt         DateTime @updatedAt
+
+  @@map("system_config")
+}
+
+model ProcedureRate {
+  id        String   @id @default(cuid())
+  name      String
+  price     Decimal  @db.Decimal(12, 2)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("procedure_rates")
+}

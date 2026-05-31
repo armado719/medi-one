@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { logAudit } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -87,6 +88,15 @@ export async function POST(request: NextRequest) {
     include: {
       user: { select: { id: true, name: true } },
     },
+  })
+
+  await logAudit({
+    userId: session.user.id,
+    action: 'CREATE',
+    entity: 'ClinicalRecord',
+    entityId: record.id,
+    changes: { patientId, type },
+    ip: request.headers.get('x-forwarded-for') ?? undefined,
   })
 
   return NextResponse.json(record, { status: 201 })
