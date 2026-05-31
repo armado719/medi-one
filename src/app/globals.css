@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #C8857A;
+  --brand-light: #E8B4AD;
+  --brand-dark: #9B5E58;
+  --bg-base: #F8F4F3;
+  --bg-surface: #FDF0EE;
+  --content: #3D1F1C;
+  --content-muted: #7A5A58;
+  --border: #E8D5D3;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-base text-content font-sans;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 3px;
+  }
+}
+
+/* React Big Calendar custom styles */
+.rbc-calendar {
+  font-family: var(--font-jakarta), sans-serif;
+}
+
+.rbc-toolbar button {
+  @apply text-content border-border rounded-lg;
+}
+
+.rbc-toolbar button:hover,
+.rbc-toolbar button.rbc-active {
+  @apply bg-brand text-white border-brand;
+}
+
+.rbc-header {
+  @apply border-border text-content-muted text-sm font-medium py-2;
+}
+
+.rbc-today {
+  background-color: var(--bg-surface);
+}
+
+.rbc-event {
+  @apply rounded-lg text-xs font-medium;
+  border: none !important;
+}
+
+.rbc-month-view,
+.rbc-time-view,
+.rbc-agenda-view {
+  @apply border-border rounded-xl;
+}
+
+.rbc-off-range-bg {
+  background-color: rgba(248, 244, 243, 0.5);
+}
