@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard,
   Users,
@@ -17,6 +18,7 @@ import {
   Package,
   ClipboardList,
   ShieldCheck,
+  DollarSign,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -27,6 +29,7 @@ interface NavItem {
   label: string
   icon: React.ComponentType<{ className?: string }>
   roles?: Role[]
+  badge?: 'lowStock'
 }
 
 const navItems: NavItem[] = [
@@ -62,6 +65,7 @@ const navItems: NavItem[] = [
     label: 'Inventario',
     icon: Package,
     roles: ['RECEPCIONISTA', 'ADMINISTRADOR'],
+    badge: 'lowStock',
   },
   {
     href: '/documentos/formulas',
@@ -74,6 +78,12 @@ const navItems: NavItem[] = [
     label: 'Consentimientos',
     icon: ShieldCheck,
     roles: ['MEDICO', 'ADMINISTRADOR'],
+  },
+  {
+    href: '/contabilidad',
+    label: 'Contabilidad',
+    icon: DollarSign,
+    roles: ['ADMINISTRADOR'],
   },
   {
     href: '/reportes',
@@ -111,6 +121,27 @@ export function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const userRole = session?.user?.role as Role | undefined
+  const [lowStockCount, setLowStockCount] = useState(0)
+
+  useEffect(() => {
+    if (!userRole || (userRole !== 'RECEPCIONISTA' && userRole !== 'ADMINISTRADOR')) return
+
+    async function fetchLowStock() {
+      try {
+        const res = await fetch('/api/productos?lowStock=true')
+        if (res.ok) {
+          const data = await res.json()
+          setLowStockCount(data.stats?.lowStockCount ?? 0)
+        }
+      } catch {
+        // silent
+      }
+    }
+
+    fetchLowStock()
+    const interval = setInterval(fetchLowStock, 5 * 60 * 1000) // refresh every 5 min
+    return () => clearInterval(interval)
+  }, [userRole])
 
   const filteredNavItems = navItems.filter(
     (item) => !item.roles || (userRole && item.roles.includes(userRole))
@@ -145,6 +176,7 @@ export function Sidebar() {
         {filteredNavItems.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)
+          const showBadge = item.badge === 'lowStock' && lowStockCount > 0
 
           return (
             <Link
@@ -164,6 +196,11 @@ export function Sidebar() {
                 )}
               />
               <span className="flex-1">{item.label}</span>
+              {showBadge && !active && (
+                <span className="text-[10px] font-semibold bg-red-500 text-white rounded-full px-1.5 py-0.5 leading-none">
+                  {lowStockCount}
+                </span>
+              )}
               {active && <ChevronRight className="w-3.5 h-3.5 text-white/70" />}
             </Link>
           )
