@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createProductSchema } from '@/validations/inventario'
-import { Decimal } from '@prisma/client/runtime/library'
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -63,9 +62,9 @@ export async function POST(request: NextRequest) {
       name: d.name,
       description: d.description || null,
       unit: d.unit,
-      stockCurrent: new Decimal(d.stockCurrent.toFixed(2)),
-      stockMinimum: new Decimal(d.stockMinimum.toFixed(2)),
-      unitPrice: new Decimal(d.unitPrice.toFixed(2)),
+      stockCurrent: d.stockCurrent,
+      stockMinimum: d.stockMinimum,
+      unitPrice: d.unitPrice,
     },
   })
 
@@ -75,7 +74,7 @@ export async function POST(request: NextRequest) {
       data: {
         productId: product.id,
         type: 'ENTRADA',
-        quantity: new Decimal(d.stockCurrent.toFixed(2)),
+        quantity: d.stockCurrent,
         reason: 'Stock inicial',
         userId: session.user.id,
       },

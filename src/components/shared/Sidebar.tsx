@@ -13,6 +13,10 @@ import {
   LogOut,
   Stethoscope,
   ChevronRight,
+  Receipt,
+  Package,
+  ClipboardList,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -45,6 +49,30 @@ const navItems: NavItem[] = [
     href: '/historias',
     label: 'Historias Clínicas',
     icon: FileText,
+    roles: ['MEDICO', 'ADMINISTRADOR'],
+  },
+  {
+    href: '/facturacion',
+    label: 'Facturación',
+    icon: Receipt,
+    roles: ['RECEPCIONISTA', 'ADMINISTRADOR'],
+  },
+  {
+    href: '/inventario',
+    label: 'Inventario',
+    icon: Package,
+    roles: ['RECEPCIONISTA', 'ADMINISTRADOR'],
+  },
+  {
+    href: '/documentos/formulas',
+    label: 'Fórmulas Médicas',
+    icon: ClipboardList,
+    roles: ['MEDICO', 'ADMINISTRADOR'],
+  },
+  {
+    href: '/documentos/consentimientos',
+    label: 'Consentimientos',
+    icon: ShieldCheck,
     roles: ['MEDICO', 'ADMINISTRADOR'],
   },
   {

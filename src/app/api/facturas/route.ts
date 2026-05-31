@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createInvoiceSchema } from '@/validations/factura'
-import { Decimal } from '@prisma/client/runtime/library'
 
 async function generateInvoiceNumber(): Promise<string> {
   const year = new Date().getFullYear()
@@ -142,19 +141,19 @@ export async function POST(request: NextRequest) {
       appointmentId: d.appointmentId || null,
       status: 'PENDIENTE',
       paymentMethod: d.paymentMethod || null,
-      subtotal: new Decimal(subtotal.toFixed(2)),
-      discount: new Decimal(discountAmount.toFixed(2)),
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      discount: parseFloat(discountAmount.toFixed(2)),
       discountType: d.discountType,
-      taxAmount: new Decimal(taxAmount.toFixed(2)),
-      total: new Decimal(total.toFixed(2)),
+      taxAmount: parseFloat(taxAmount.toFixed(2)),
+      total: parseFloat(total.toFixed(2)),
       notes: d.notes || null,
       items: {
         create: d.items.map((item) => ({
           description: item.description,
-          quantity: new Decimal(item.quantity.toFixed(2)),
-          unitPrice: new Decimal(item.unitPrice.toFixed(2)),
-          taxRate: new Decimal(item.taxRate.toFixed(2)),
-          subtotal: new Decimal(item.subtotal.toFixed(2)),
+          quantity: parseFloat(item.quantity.toFixed(2)),
+          unitPrice: parseFloat(item.unitPrice.toFixed(2)),
+          taxRate: parseFloat(item.taxRate.toFixed(2)),
+          subtotal: parseFloat(item.subtotal.toFixed(2)),
         })),
       },
     },
