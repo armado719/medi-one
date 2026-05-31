@@ -75,7 +75,7 @@ export function ContabilidadTable({ data }: ContabilidadTableProps) {
     getCoreRowModel: getCoreRowModel(),
   })
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <p className="text-content-muted text-sm">No hay movimientos para mostrar</p>

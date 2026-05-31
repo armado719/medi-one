@@ -69,7 +69,7 @@ export function InventarioTable({ search, onStatsUpdate, onMovimientoSuccess }: 
     )
   }
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-content-muted">
         <Package className="w-10 h-10 mb-3 opacity-30" />

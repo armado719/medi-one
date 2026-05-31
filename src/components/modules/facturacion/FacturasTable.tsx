@@ -72,7 +72,7 @@ export function FacturasTable({ search, status, dateFrom, dateTo, page, onPageCh
     )
   }
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-content-muted">
         <FileText className="w-10 h-10 mb-3 opacity-30" />

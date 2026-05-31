@@ -152,7 +152,7 @@ export function PacientesTable({ search }: PacientesTableProps) {
     )
   }
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="text-center py-16 text-content-muted">
         <p className="text-lg font-medium">No se encontraron pacientes</p>
