@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, FileText, Download, Edit, Trash2 } from 'lucide-react'
+import { Plus, FileText, Download, Edit, Trash2, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -236,9 +237,16 @@ function DocumentsTab({ onRefresh }: { onRefresh: number }) {
               </TableCell>
               <TableCell><ConsentStatusBadge status={f.status} /></TableCell>
               <TableCell>
-                <Button variant="ghost" size="icon" onClick={() => handleDownload(f.id)} title="Descargar PDF">
-                  <Download className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Link href={`/documentos/consentimientos/${f.id}`}>
+                    <Button variant="ghost" size="icon" title="Ver detalle">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="icon" onClick={() => handleDownload(f.id)} title="Descargar PDF">
+                    <Download className="w-4 h-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
