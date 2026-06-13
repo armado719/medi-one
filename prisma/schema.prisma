@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -82,9 +82,9 @@ enum ConsentStatus {
 
 model User {
   id        String    @id @default(cuid())
-  name      String    @db.VarChar(255)
-  email     String    @unique @db.VarChar(255)
-  password  String    @db.VarChar(255)
+  name      String   
+  email     String    @unique
+  password  String   
   role      Role      @default(RECEPCIONISTA)
   active    Boolean   @default(true)
   createdAt DateTime  @default(now())
@@ -104,37 +104,37 @@ model User {
 
 model Patient {
   id             String        @id @default(cuid())
-  firstName      String        @db.VarChar(100)
-  lastName       String        @db.VarChar(100)
+  firstName      String       
+  lastName       String       
   documentType   DocumentType
-  documentNumber String        @db.VarChar(20)
+  documentNumber String       
   birthDate      DateTime      @db.Date
   sex            Sex
-  phone          String        @db.VarChar(20)
-  email          String?       @db.VarChar(255)
-  address        String?       @db.VarChar(500)
-  city           String?       @db.VarChar(100)
-  eps            String?       @db.VarChar(255)
-  occupation     String?       @db.VarChar(255)
+  phone          String       
+  email          String?      
+  address        String?      
+  city           String?      
+  eps            String?      
+  occupation     String?      
   status         PatientStatus @default(ACTIVO)
-  photoUrl       String?       @db.VarChar(500)
+  photoUrl       String?      
   // Extended personal fields
-  primerNombre          String?  @db.VarChar(100)
-  segundoNombre         String?  @db.VarChar(100)
-  primerApellido        String?  @db.VarChar(100)
-  segundoApellido       String?  @db.VarChar(100)
-  estadoCivil           String?  @db.VarChar(50)
+  primerNombre          String? 
+  segundoNombre         String? 
+  primerApellido        String? 
+  segundoApellido       String? 
+  estadoCivil           String? 
   // Extended location fields
-  zona                  String?  @db.VarChar(20)
-  departamento          String?  @db.VarChar(100)
-  municipio             String?  @db.VarChar(100)
+  zona                  String? 
+  departamento          String? 
+  municipio             String? 
   // Extended contact fields
-  telefonoAlternativo   String?  @db.VarChar(20)
-  religion              String?  @db.VarChar(100)
+  telefonoAlternativo   String? 
+  religion              String? 
   // Emergency contact
-  responsableNombre     String?  @db.VarChar(255)
-  responsableParentesco String?  @db.VarChar(100)
-  responsableTelefono   String?  @db.VarChar(20)
+  responsableNombre     String? 
+  responsableParentesco String? 
+  responsableTelefono   String? 
   // Observations
   observaciones         String?  @db.Text
   createdAt      DateTime      @default(now())
@@ -179,7 +179,7 @@ model ClinicalRecord {
   patientId String
   userId    String
   type      ClinicalRecordType
-  data      Json               @db.Json
+  data      Json              
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
   deletedAt DateTime?
@@ -193,11 +193,11 @@ model ClinicalRecord {
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String
-  action    String   @db.VarChar(100)
-  entity    String   @db.VarChar(100)
-  entityId  String   @db.VarChar(100)
-  changes   Json?    @db.Json
-  ip        String?  @db.VarChar(45)
+  action    String  
+  entity    String  
+  entityId  String  
+  changes   Json?   
+  ip        String? 
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
@@ -337,7 +337,7 @@ model ConsentTemplate {
   id        String   @id @default(cuid())
   name      String
   procedure String
-  content   String   @db.LongText
+  content   String   @db.Text
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
