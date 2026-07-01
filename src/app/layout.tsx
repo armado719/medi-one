@@ -37,14 +37,16 @@ export default function RootLayout({
             style: {
               background: '#FDF0EE',
               border: '1px solid #E8D5D3',
+              borderLeft: '5px solid #C8857A',
               color: '#3D1F1C',
               fontFamily: 'var(--font-jakarta)',
-              borderRadius: '1rem',
+              borderRadius: '1.25rem',
+              boxShadow: '0 4px 16px 0 rgba(61,31,28,0.14)',
             },
             classNames: {
-              success: '!bg-green-50 !text-green-800 !border-green-200',
-              error: '!bg-red-50 !text-red-800 !border-red-200',
-              warning: '!bg-yellow-50 !text-yellow-800 !border-yellow-200',
+              success: '!bg-green-50 !text-green-800 !border-green-200 !border-l-green-500',
+              error: '!bg-red-50 !text-red-800 !border-red-200 !border-l-red-500',
+              warning: '!bg-yellow-50 !text-yellow-800 !border-yellow-200 !border-l-yellow-500',
             },
           }}
         />
