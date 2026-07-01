@@ -39,6 +39,12 @@ export default function RootLayout({
               border: '1px solid #E8D5D3',
               color: '#3D1F1C',
               fontFamily: 'var(--font-jakarta)',
+              borderRadius: '1rem',
+            },
+            classNames: {
+              success: '!bg-green-50 !text-green-800 !border-green-200',
+              error: '!bg-red-50 !text-red-800 !border-red-200',
+              warning: '!bg-yellow-50 !text-yellow-800 !border-yellow-200',
             },
           }}
         />
