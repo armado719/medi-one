@@ -32,7 +32,7 @@ export default function RootLayout({
       <body className="bg-bg-base text-content font-sans antialiased">
         {children}
         <Toaster
-          position="bottom-right"
+          position="top-center"
           toastOptions={{
             style: {
               background: '#FDF0EE',
