@@ -115,7 +115,7 @@ export function PacienteForm({ mode, patient }: PacienteFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" autoComplete="off">
       {/* Información Personal */}
       <Card>
         <CardHeader>
