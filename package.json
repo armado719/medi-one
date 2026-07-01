@@ -11,7 +11,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "backup": "tsx scripts/backup.ts",
-    "backup:cron": "tsx scripts/backup-cron.ts"
+    "backup:cron": "tsx scripts/backup-cron.ts",
+    "migrate:mysql-to-postgres": "tsx scripts/migrate-mysql-to-postgres.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

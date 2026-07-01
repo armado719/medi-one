@@ -1,0 +1,397 @@
+// Read-only client pointed at the legacy local MySQL database (XAMPP), used only
+// by scripts/migrate-mysql-to-postgres.ts to copy local dev data into Postgres.
+// Not used by the app at runtime — the app always uses prisma/schema.prisma (Postgres).
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma-mysql-client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("MYSQL_DATABASE_URL")
+}
+
+enum Role {
+  MEDICO
+  RECEPCIONISTA
+  ADMINISTRADOR
+}
+
+enum DocumentType {
+  CC
+  CE
+  PA
+  TI
+}
+
+enum Sex {
+  MASCULINO
+  FEMENINO
+  OTRO
+}
+
+enum PatientStatus {
+  ACTIVO
+  INACTIVO
+}
+
+enum AppointmentType {
+  LABORAL
+  ESTETICA
+  CARDIOVASCULAR
+  CONTROL
+}
+
+enum AppointmentStatus {
+  CONFIRMADA
+  PENDIENTE
+  CANCELADA
+  NO_ASISTIO
+}
+
+enum ClinicalRecordType {
+  LABORAL
+  ESTETICA
+  CARDIOVASCULAR
+}
+
+enum InvoiceStatus {
+  PENDIENTE
+  PAGADO
+  ANULADO
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  TRANSFERENCIA
+  TARJETA
+}
+
+enum EntryType {
+  INGRESO
+  EGRESO
+}
+
+enum MovementType {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+enum ConsentStatus {
+  PENDIENTE
+  FIRMADO
+  RECHAZADO
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      @default(RECEPCIONISTA)
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  appointments        Appointment[]
+  clinicalRecords     ClinicalRecord[]
+  auditLogs           AuditLog[]
+  invoices            Invoice[]
+  accountEntries      AccountEntry[]
+  prescriptions       Prescription[]
+  inventoryMovements  InventoryMovement[]
+
+  @@map("users")
+}
+
+model Patient {
+  id             String        @id @default(cuid())
+  firstName      String
+  lastName       String
+  documentType   DocumentType
+  documentNumber String
+  birthDate      DateTime      @db.Date
+  sex            Sex
+  phone          String
+  email          String?
+  address        String?
+  city           String?
+  eps            String?
+  occupation     String?
+  status         PatientStatus @default(ACTIVO)
+  photoUrl       String?
+  primerNombre          String?
+  segundoNombre         String?
+  primerApellido        String?
+  segundoApellido       String?
+  estadoCivil           String?
+  zona                  String?
+  departamento          String?
+  municipio             String?
+  telefonoAlternativo   String?
+  religion              String?
+  responsableNombre     String?
+  responsableParentesco String?
+  responsableTelefono   String?
+  observaciones         String?  @db.Text
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  appointments    Appointment[]
+  clinicalRecords ClinicalRecord[]
+  invoices        Invoice[]
+  prescriptions   Prescription[]
+  consentForms    ConsentForm[]
+
+  @@unique([documentType, documentNumber])
+  @@map("patients")
+}
+
+model Appointment {
+  id               String            @id @default(cuid())
+  patientId        String
+  userId           String
+  date             DateTime
+  duration         Int               @default(30)
+  type             AppointmentType
+  status           AppointmentStatus @default(PENDIENTE)
+  notes            String?           @db.Text
+  whatsappReminder Boolean           @default(false)
+  primeraVez       Boolean           @default(false)
+  valorConsulta    Decimal?          @db.Decimal(12,2)
+  prioridad        Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("appointments")
+}
+
+model ClinicalRecord {
+  id        String             @id @default(cuid())
+  patientId String
+  userId    String
+  type      ClinicalRecordType
+  data      Json
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  deletedAt DateTime?
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("clinical_records")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  changes   Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  number        String        @unique
+  patientId     String
+  userId        String
+  appointmentId String?
+  status        InvoiceStatus @default(PENDIENTE)
+  paymentMethod PaymentMethod?
+  subtotal      Decimal       @db.Decimal(12,2)
+  discount      Decimal       @db.Decimal(12,2) @default(0)
+  discountType  String        @default("PORCENTAJE")
+  taxAmount     Decimal       @db.Decimal(12,2) @default(0)
+  total         Decimal       @db.Decimal(12,2)
+  notes         String?       @db.Text
+  cancelReason  String?       @db.Text
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
+  items        InvoiceItem[]
+  accountEntry AccountEntry?
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Decimal  @db.Decimal(10,2)
+  unitPrice   Decimal  @db.Decimal(12,2)
+  taxRate     Decimal  @db.Decimal(5,2) @default(0)
+  subtotal    Decimal  @db.Decimal(12,2)
+  createdAt   DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model AccountEntry {
+  id          String    @id @default(cuid())
+  invoiceId   String?   @unique
+  type        EntryType
+  amount      Decimal   @db.Decimal(12,2)
+  description String
+  date        DateTime  @default(now())
+  userId      String
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  invoice Invoice? @relation(fields: [invoiceId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@map("account_entries")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  unit         String   @default("und")
+  stockCurrent Decimal  @db.Decimal(10,2) @default(0)
+  stockMinimum Decimal  @db.Decimal(10,2) @default(0)
+  unitPrice    Decimal  @db.Decimal(12,2) @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  movements InventoryMovement[]
+
+  @@map("products")
+}
+
+model InventoryMovement {
+  id        String       @id @default(cuid())
+  productId String
+  type      MovementType
+  quantity  Decimal      @db.Decimal(10,2)
+  reason    String?
+  userId    String
+  createdAt DateTime     @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("inventory_movements")
+}
+
+model Prescription {
+  id           String   @id @default(cuid())
+  patientId    String
+  userId       String
+  recordId     String?
+  diagnosis    String?
+  instructions String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  patient Patient            @relation(fields: [patientId], references: [id])
+  user    User               @relation(fields: [userId], references: [id])
+  items   PrescriptionItem[]
+
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id             String   @id @default(cuid())
+  prescriptionId String
+  medication     String
+  concentration  String?
+  form           String?
+  dose           String
+  frequency      String
+  duration       String
+  route          String?
+  createdAt      DateTime @default(now())
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@map("prescription_items")
+}
+
+model ConsentTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  procedure String
+  content   String   @db.Text
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  consents ConsentForm[]
+
+  @@map("consent_templates")
+}
+
+model ConsentForm {
+  id         String        @id @default(cuid())
+  templateId String
+  patientId  String
+  recordId   String?
+  status     ConsentStatus @default(PENDIENTE)
+  signedAt   DateTime?
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  deletedAt  DateTime?
+
+  template ConsentTemplate @relation(fields: [templateId], references: [id])
+  patient  Patient         @relation(fields: [patientId], references: [id])
+
+  @@map("consent_forms")
+}
+
+model SystemConfig {
+  id                String   @id @default(cuid())
+  clinicName        String   @default("MEDI ONE")
+  clinicAddress     String?
+  clinicCity        String?
+  clinicPhone       String?
+  clinicEmail       String?
+  clinicNit         String?
+  clinicWebsite     String?
+  doctorName        String   @default("Dra. Alejandra Bárcenas")
+  doctorSpecialties String?
+  doctorLicense     String?
+  doctorCardNum     String?
+  signatureUrl      String?
+  logoUrl           String?
+  updatedAt         DateTime @updatedAt
+
+  @@map("system_config")
+}
+
+model ProcedureRate {
+  id        String   @id @default(cuid())
+  name      String
+  price     Decimal  @db.Decimal(12, 2)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("procedure_rates")
+}
