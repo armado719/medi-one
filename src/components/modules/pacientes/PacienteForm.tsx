@@ -104,8 +104,8 @@ export function PacienteForm({ mode, patient }: PacienteFormProps) {
 
       toast.success(
         mode === 'create'
-          ? 'Paciente creado exitosamente'
-          : 'Paciente actualizado exitosamente'
+          ? 'Contacto guardado con éxito'
+          : 'Contacto actualizado con éxito'
       )
       router.push('/pacientes')
       router.refresh()
