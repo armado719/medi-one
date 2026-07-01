@@ -117,6 +117,18 @@ export function PacientesTable({ search }: PacientesTableProps) {
       ),
     },
     {
+      id: 'dataConsent',
+      header: 'Consentimiento',
+      cell: ({ row }) => {
+        const hasActiveConsent = (row.original.dataConsents?.length ?? 0) > 0
+        return (
+          <Badge variant={hasActiveConsent ? 'success' : 'destructive'}>
+            {hasActiveConsent ? 'Vigente' : 'Sin consentimiento'}
+          </Badge>
+        )
+      },
+    },
+    {
       id: 'actions',
       header: 'Acciones',
       cell: ({ row }) => (

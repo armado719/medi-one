@@ -55,6 +55,20 @@ export interface Patient {
   observaciones?: string | null
   createdAt: string
   updatedAt: string
+  dataConsents?: DataConsent[]
+}
+
+export interface DataConsent {
+  id: string
+  patientId: string
+  version: string
+  contentHash: string
+  acceptedAt: string
+  acceptedById: string
+  signature?: string | null
+  revokedAt?: string | null
+  createdAt: string
+  acceptedBy?: { name: string }
 }
 
 export interface Appointment {

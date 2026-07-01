@@ -98,6 +98,7 @@ model User {
   accountEntries      AccountEntry[]
   prescriptions       Prescription[]
   inventoryMovements  InventoryMovement[]
+  dataConsents        DataConsent[]
 
   @@map("users")
 }
@@ -146,6 +147,7 @@ model Patient {
   invoices        Invoice[]
   prescriptions   Prescription[]
   consentForms    ConsentForm[]
+  dataConsents    DataConsent[]
 
   @@unique([documentType, documentNumber])
   @@map("patients")
@@ -364,6 +366,26 @@ model ConsentForm {
   patient  Patient         @relation(fields: [patientId], references: [id])
 
   @@map("consent_forms")
+}
+
+// Authorization for treatment of personal / sensitive health data (Ley 1581 de 2012, Habeas Data).
+// Distinct from ConsentForm, which covers informed consent for a specific medical procedure.
+model DataConsent {
+  id           String    @id @default(cuid())
+  patientId    String
+  version      String
+  contentHash  String
+  acceptedAt   DateTime  @default(now())
+  acceptedById String
+  signature    String?
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  patient    Patient @relation(fields: [patientId], references: [id])
+  acceptedBy User    @relation(fields: [acceptedById], references: [id])
+
+  @@index([patientId])
+  @@map("data_consents")
 }
 
 model SystemConfig {

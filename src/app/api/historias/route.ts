@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { logAudit } from '@/lib/audit'
+import { getActiveDataConsent } from '@/lib/dataConsent'
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -76,6 +77,14 @@ export async function POST(request: NextRequest) {
 
   if (!patient) {
     return NextResponse.json({ error: 'Paciente no encontrado' }, { status: 404 })
+  }
+
+  const activeConsent = await getActiveDataConsent(patientId)
+  if (!activeConsent) {
+    return NextResponse.json(
+      { error: 'El paciente no tiene consentimiento de tratamiento de datos vigente.' },
+      { status: 403 }
+    )
   }
 
   const record = await prisma.clinicalRecord.create({

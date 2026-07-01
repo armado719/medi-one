@@ -36,6 +36,13 @@ export async function GET(request: NextRequest) {
       skip,
       take: pageSize,
       orderBy: { createdAt: 'desc' },
+      include: {
+        dataConsents: {
+          where: { revokedAt: null },
+          orderBy: { acceptedAt: 'desc' },
+          take: 1,
+        },
+      },
     }),
     prisma.patient.count({ where }),
   ])

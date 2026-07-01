@@ -20,8 +20,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { PacienteForm } from '@/components/modules/pacientes/PacienteForm'
+import { DataConsentModal } from '@/components/modules/pacientes/DataConsentModal'
 import { formatDate, calculateAge } from '@/lib/utils'
-import type { Patient, ClinicalRecord, Appointment } from '@/types'
+import type { Patient, ClinicalRecord, Appointment, DataConsent } from '@/types'
 
 interface PatientWithRelations extends Patient {
   appointments: Appointment[]
@@ -102,6 +103,10 @@ export default function PacienteDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [consentModalOpen, setConsentModalOpen] = useState(false)
+  const [pendingHistoriaHref, setPendingHistoriaHref] = useState<string | null>(null)
+  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false)
+  const [isRevoking, setIsRevoking] = useState(false)
 
   useEffect(() => {
     const fetchPatient = async () => {
@@ -139,6 +144,47 @@ export default function PacienteDetailPage() {
     } finally {
       setIsDeleting(false)
       setDeleteDialogOpen(false)
+    }
+  }
+
+  const activeConsent = patient?.dataConsents?.[0] ?? null
+
+  const handleHistoriaLinkClick = (href: string) => (e: React.MouseEvent) => {
+    if (!activeConsent) {
+      e.preventDefault()
+      setPendingHistoriaHref(href)
+      setConsentModalOpen(true)
+    }
+  }
+
+  const handleConsentAccepted = (consent: DataConsent) => {
+    setPatient((prev) => (prev ? { ...prev, dataConsents: [consent] } : prev))
+    if (pendingHistoriaHref) {
+      router.push(pendingHistoriaHref)
+      setPendingHistoriaHref(null)
+    }
+  }
+
+  const handleRevoke = async () => {
+    if (!activeConsent) return
+    setIsRevoking(true)
+    try {
+      const response = await fetch(
+        `/api/pacientes/${id}/consentimiento-datos/${activeConsent.id}/revocar`,
+        { method: 'PATCH' }
+      )
+      const result = await response.json()
+      if (!response.ok) {
+        toast.error(result.error)
+        return
+      }
+      toast.success('Consentimiento revocado')
+      setPatient((prev) => (prev ? { ...prev, dataConsents: [] } : prev))
+    } catch {
+      toast.error('Error al revocar el consentimiento')
+    } finally {
+      setIsRevoking(false)
+      setRevokeDialogOpen(false)
     }
   }
 
@@ -186,6 +232,9 @@ export default function PacienteDetailPage() {
               >
                 {patient.status === 'ACTIVO' ? 'Activo' : 'Inactivo'}
               </Badge>
+              <Badge variant={activeConsent ? 'success' : 'destructive'}>
+                {activeConsent ? 'Consentimiento vigente' : 'Sin consentimiento'}
+              </Badge>
               <span className="text-sm text-content-muted">
                 {DOCUMENT_LABELS[patient.documentType]} — {patient.documentNumber}
               </span>
@@ -194,6 +243,39 @@ export default function PacienteDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {!isEditing && (
+            <Button variant="outline" onClick={() => setConsentModalOpen(true)}>
+              Gestionar consentimiento
+            </Button>
+          )}
+          {isAdmin && !isEditing && activeConsent && (
+            <Dialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">Revocar consentimiento</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>¿Revocar consentimiento de datos?</DialogTitle>
+                  <DialogDescription>
+                    El paciente no podrá tener nuevas historias clínicas hasta registrar
+                    una nueva autorización. El registro histórico se conserva.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setRevokeDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleRevoke}
+                    disabled={isRevoking}
+                  >
+                    {isRevoking ? 'Revocando...' : 'Revocar'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
           {!isEditing && (
             <Link href={`/pacientes/${id}?edit=true`}>
               <Button variant="outline">Editar datos</Button>
@@ -405,17 +487,26 @@ export default function PacienteDetailPage() {
                 Historias Clínicas
               </CardTitle>
               <div className="flex gap-2">
-                <Link href={`/historias/laboral/nueva?pacienteId=${id}`}>
+                <Link
+                  href={`/historias/laboral/nueva?pacienteId=${id}`}
+                  onClick={handleHistoriaLinkClick(`/historias/laboral/nueva?pacienteId=${id}`)}
+                >
                   <Button size="sm" variant="outline">
                     Laboral
                   </Button>
                 </Link>
-                <Link href={`/historias/estetica/nueva?pacienteId=${id}`}>
+                <Link
+                  href={`/historias/estetica/nueva?pacienteId=${id}`}
+                  onClick={handleHistoriaLinkClick(`/historias/estetica/nueva?pacienteId=${id}`)}
+                >
                   <Button size="sm" variant="outline">
                     Estética
                   </Button>
                 </Link>
-                <Link href={`/historias/cardiovascular/nueva?pacienteId=${id}`}>
+                <Link
+                  href={`/historias/cardiovascular/nueva?pacienteId=${id}`}
+                  onClick={handleHistoriaLinkClick(`/historias/cardiovascular/nueva?pacienteId=${id}`)}
+                >
                   <Button size="sm" variant="outline">
                     Cardiovascular
                   </Button>
@@ -511,6 +602,16 @@ export default function PacienteDetailPage() {
           </Card>
         </>
       )}
+
+      <DataConsentModal
+        patientId={id}
+        open={consentModalOpen}
+        onOpenChange={(open) => {
+          setConsentModalOpen(open)
+          if (!open) setPendingHistoriaHref(null)
+        }}
+        onAccepted={handleConsentAccepted}
+      />
     </div>
   )
 }

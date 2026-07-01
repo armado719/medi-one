@@ -27,6 +27,11 @@ export async function GET(
         take: 10,
         include: { user: { select: { name: true } } },
       },
+      dataConsents: {
+        where: { revokedAt: null },
+        orderBy: { acceptedAt: 'desc' },
+        take: 1,
+      },
     },
   })
 
